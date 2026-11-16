@@ -123,6 +123,9 @@ class AltinoBle(
     @Volatile private var rxSeenOnLink = false   // 이 연결에서 한 번이라도 받았나
     @Volatile private var staleNoRx = 0          // 한 번도 못 받은 채 '죽은 링크'로 끊은 횟수(연속)
     private var lastCloseAt = 0L
+    // 점검 화면 '프레임 실험'용 쓰기 방식(setTxOptions). 기본값은 지금까지와 같다.
+    @Volatile private var splitLite = true       // 22바이트를 14+8 로 나눠 쓸지
+    @Volatile private var forceResp = false      // 응답 있는 쓰기를 쓸지
 
     @Volatile private var boundAddress: String? = prefs.getString(KEY_ADDR, null)
     @Volatile private var boundName: String? = prefs.getString(KEY_NAME, null)
@@ -558,6 +561,10 @@ class AltinoBle(
         return sb.toString()
     }
 
+    /** 점검 화면 '프레임 실험'용: 22바이트 14+8 분할 여부, 응답 있는 쓰기 여부. 앱을 다시 켜면 기본값으로 돌아간다. */
+    @JavascriptInterface
+    fun setTxOptions(split: Boolean, withResponse: Boolean) { splitLite = split; forceResp = withResponse }
+
     /** 점검 화면용: 어떤 특성을 골랐고, 쓰기가 성공하는지, 받은 게 있는지. */
     @JavascriptInterface
     fun getDiag(): String = try {
@@ -632,7 +639,8 @@ class AltinoBle(
     @SuppressLint("MissingPermission")
     @Suppress("DEPRECATION")
     private fun writeCompat(g: BluetoothGatt, ch: BluetoothGattCharacteristic, data: ByteArray): Boolean {
-        val wtype = if ((ch.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0)
+        val canResp = (ch.properties and BluetoothGattCharacteristic.PROPERTY_WRITE) != 0
+        val wtype = if (!(forceResp && canResp) && (ch.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0)
             BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE else BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
         return if (Build.VERSION.SDK_INT >= 33) {
             g.writeCharacteristic(ch, data, wtype) == BluetoothStatusCodes.SUCCESS
@@ -658,7 +666,7 @@ class AltinoBle(
         val max = negotiatedMtu - 3
         // 라이트(22바이트)는 MTU 와 상관없이 오케스트라와 똑같이 14+8 로 나눠 쓴다 — 실물이 한 번에 쓴 22바이트를
         // 받아들이는지 확인되지 않았다(2026-11-17 실기: 답 없음). 확인된 방식만 따라 한다.
-        if (d.size == 22 && max >= 14) return listOf(d.copyOfRange(0, 14), d.copyOfRange(14, 22))
+        if (splitLite && d.size == 22 && max >= 14) return listOf(d.copyOfRange(0, 14), d.copyOfRange(14, 22))
         if (d.size <= max) return listOf(d)
         val n = maxOf(1, max)
         return (d.indices step n).map { d.copyOfRange(it, minOf(it + n, d.size)) }
