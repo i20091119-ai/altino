@@ -30,6 +30,9 @@
   const FRESH_MS = 1200;                   // S6
   const RECONN_HINT_MS = 12000;            // 이만큼 재연결이 이어지면 원인을 짚어 준다
   const BATT_LOW = 700;
+  // 구형 알티노는 같은 조향 값에 앞바퀴가 덜 꺾인다(2026-11-17 실기: 127 이 오케스트라2 의 끝까지 꺾은 것과 같고, 57 은 '많이 안 돌아감').
+  // 화면들의 조향 값(57·100 등)은 네오에서 맞춘 것이라, 구형일 때만 이만큼 키워 보낸다. 점검 화면은 rawSteer 로 끈다. 배율은 실측 전 값.
+  const STEER_GAIN_CLASSIC = 1.75;
   const RECORD_MAX = 300;
 
   let created = false;                     // 한 화면에 kit 은 하나만
@@ -238,6 +241,7 @@
       if (o.kick !== false && m !== 0 && lastM === 0 && Math.abs(m) < KICK_BELOW) kickUntil = Date.now() + KICK_MS;
       lastM = m;
       const out = (m !== 0 && Date.now() < kickUntil) ? Math.sign(m) * KICK : m;
+      if (st !== 0 && o.rawSteer !== true && P.getModel() === 'classic') st = Math.max(-127, Math.min(127, Math.round(st * STEER_GAIN_CLASSIC)));
       state.go(out, out); state.steer(st);
       send();
     }
