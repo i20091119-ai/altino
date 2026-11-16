@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>① 정지 경기장 — 알티노 캠프</title>
+<link rel="stylesheet" href="css/camp.css" />
+<style>
+  .stage{grid-template-columns:1.15fr 1fr}
+  .drive{align-items:center;justify-content:center;gap:16px}
+  .speed{font-size:1.1rem}.speed b{font-size:2.6rem;color:var(--theme);margin:0 6px}
+  .state{font-size:1.1rem;min-height:1.6em;text-align:center}
+  .steps{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .steps div{background:var(--tint);border-radius:14px;padding:10px 12px;font-size:.92rem;line-height:1.4}
+  .steps b{color:var(--theme)}
+  .track{margin-top:6px}
+  .lane{position:relative;height:74px;border-radius:14px;background:#e3e0ea;border-top:5px solid var(--ink);border-bottom:5px solid var(--ink);overflow:hidden}
+  .lane i{position:absolute;top:0;bottom:0}
+  .lane .st{left:12%;width:7px;background:var(--leaf)}
+  .lane .yl{left:62%;width:22%;background:#f6dc8c}.lane .gr{left:67.5%;width:11%;background:#7fc98f}.lane .sp{left:72.6%;width:6px;background:#e5383b}
+  .lane .car{position:absolute;left:4%;top:50%;transform:translateY(-50%) scaleX(-1);font-size:2rem}
+  .cap{display:flex;justify-content:space-between;font-size:.8rem;color:var(--mut);margin-top:5px}
+</style>
+</head>
+<body data-arena="c01">
+
+<div class="topbar">
+  <div class="row">
+    <a class="back" href="index.html">← 캠프 홈</a>
+    <h1><span class="num">①</span>정지 경기장 <span style="font-size:.85rem;font-weight:500;opacity:.9">버튼 한 번만 꾹 — 정지선에 딱 멈추기</span></h1>
+  </div>
+  <div id="kitBar"></div>
+</div>
+<div id="chbar"></div>
+
+<div class="stage">
+  <section class="card drive">
+    <div class="speed">이번 속도 <b id="spd">300</b></div>
+    <button id="go" class="go">▲<br>전진</button>
+    <div class="state" id="state">누르고 있는 동안만 달려요</div>
+    <button id="again" class="btn ghost hidden">↺ 다시 하기</button>
+  </section>
+  <section class="card">
+    <h2>🛑 이렇게 해요</h2>
+    <div class="steps">
+      <div><b>1.</b> 차 앞 끝을 출발선에 맞춰요</div>
+      <div><b>2.</b> 전진 버튼을 <b>한 번만</b> 꾹 눌러요</div>
+      <div><b>3.</b> 정지선에서 손을 떼요</div>
+      <div><b>4.</b> 초록 띠(±10cm) 안이면 성공!</div>
+    </div>
+    <p class="lead">💡 속도가 빠를수록 손을 뗀 뒤에도 조금 더 밀려요. 500은 약 10cm 미리 떼어 보세요.</p>
+    <p class="lead">⚠ 끊어서 여러 번 누르면 안 돼요. 한 번 떼면 그 시도는 끝이에요.</p>
+    <div class="track">
+      <div class="lane"><i class="st"></i><i class="yl"></i><i class="gr"></i><i class="sp"></i><span class="car">🚗</span></div>
+      <div class="cap"><span>출발선</span><span>180cm</span><span>정지선 · 초록 ±10cm · 노랑 ±20cm</span></div>
+    </div>
+    <div class="row" style="margin-top:auto"><span class="chip">누른 시간 <b id="held">0.0</b>초</span><span class="chip">조작은 학생만</span></div>
+  </section>
+</div>
+
+<script src="js/protocol.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dotmatrix.js"></script>
+<script src="js/transport.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/camp.js"></script>
+<script src="js/c01.js"></script>
+</body>
+</html>

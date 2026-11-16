@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>⑤ AI 주행 경기장 — 알티노 캠프</title>
+<link rel="stylesheet" href="css/camp.css" />
+<style>
+  .stage{grid-template-columns:.95fr 1.1fr .85fr}
+  .cam{position:relative;width:100%;aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:#1d2440}
+  .cam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+  .cam .msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;text-align:center;padding:16px;font-size:1rem;line-height:1.5}
+  .now{display:flex;align-items:center;gap:12px}
+  .now .ic{width:74px;height:74px;border-radius:20px;background:var(--tint);display:flex;align-items:center;justify-content:center;font-size:2.4rem;color:var(--theme);flex:none}
+  .now .nm{font-size:1.5rem;font-weight:700}
+  .cls{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0}
+  .cl{border:2px solid var(--line);border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;background:#fff}
+  .cl.hit{border-color:var(--theme);background:var(--tint)}
+  .cl .ic{font-size:2.2rem;line-height:1.1;color:var(--theme)}
+  .cmd{color:var(--theme)}
+  .cl .nm{font-weight:700}
+  .cl .ct{font-size:.85rem;color:var(--mut)}
+  .cl .teach{width:100%;padding:11px 4px;font-size:.95rem;touch-action:none}
+  .cl .del{border:0;background:none;color:var(--mut);font-family:inherit;font-size:.8rem;text-decoration:underline}
+  .drive{align-items:center;justify-content:center;text-align:center;gap:12px}
+  .cmd{font-size:4.4rem;line-height:1}
+</style>
+</head>
+<body data-arena="c05">
+
+<div class="topbar">
+  <div class="row">
+    <a class="back" href="index.html">← 캠프 홈</a>
+    <h1><span class="num">⑤</span>AI 주행 경기장 <span style="font-size:.85rem;font-weight:500;opacity:.9">손짓으로만 운전 — 화면은 만지지 않기</span></h1>
+  </div>
+  <div id="kitBar"></div>
+</div>
+<div id="chbar"></div>
+
+<div class="stage">
+  <section class="card">
+    <h2>📷 알티노의 눈 <button id="flip" class="btn ghost sm" style="margin-left:auto">카메라 바꾸기</button></h2>
+    <div class="cam"><video id="video" playsinline muted></video><div class="msg" id="camMsg">AI를 준비하고 있어요…</div></div>
+    <div class="now"><div class="ic" id="nowIc">?</div><div class="grow"><div class="nm" id="nowNm">아직 몰라요</div>
+      <div class="bar"><i id="nowBar"></i></div></div></div>
+    <p class="lead">손짓마다 20장쯤 가르치면 잘 알아봐요. 배경·거리도 바꿔 가며 보여 주세요.</p>
+  </section>
+  <section class="card">
+    <h2>✋ 손짓 가르치기 <span class="lead" style="margin-left:auto">버튼을 꾹 누르고 있어요</span></h2>
+    <div class="cls" id="cls"></div>
+  </section>
+  <section class="card drive">
+    <h2 style="align-self:stretch">🚗 손짓으로 운전</h2>
+    <div class="cmd" id="cmd">■</div>
+    <div style="font-size:1.2rem;font-weight:700" id="cmdNm">멈춤</div>
+    <button id="start" class="btn big">▶ 운전 시작</button>
+    <button id="stop" class="btn big coral hidden">■ 멈춰</button>
+    <p class="lead" id="tip">운전을 시작하면 화면은 만지지 않아요. 잘 모르겠으면 알티노가 멈춰요.</p>
+  </section>
+</div>
+
+<script src="js/protocol.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dotmatrix.js"></script>
+<script src="js/transport.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/camp.js"></script>
+<script src="js/ai/tf.min.js"></script>
+<script src="js/ai/mobilenet_data.js"></script>
+<script src="js/ai/gesture.js"></script>
+<script src="js/c05.js"></script>
+</body>
+</html>

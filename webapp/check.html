@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>🔧 선생님용 점검 — 알티노 캠프</title>
+<link rel="stylesheet" href="css/camp.css" />
+<style>
+  .stage{grid-template-columns:1fr 1fr 1fr}
+  .scroll{overflow-y:auto}
+  .card h2{font-size:1rem}
+  .bits{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+  .bits button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:8px 0;font-family:inherit;font-weight:700;font-size:.8rem;color:var(--ink)}
+  .bits button.on{background:var(--sun);border-color:var(--sun)}
+  .notes{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+  .notes button{padding:9px 0;font-size:.85rem;border-radius:10px}
+  textarea{width:100%;flex:1;min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;border:2px solid var(--line);border-radius:12px;padding:8px;resize:none;user-select:text;-webkit-user-select:text}
+  .sv{font-variant-numeric:tabular-nums;font-weight:700}
+  .pad button{padding:13px 0;font-size:1.5rem}
+</style>
+</head>
+<body data-arena="chk">
+
+<div class="topbar">
+  <div class="row">
+    <a class="back" href="index.html">← 캠프 홈</a>
+    <h1><span class="num">🔧</span>선생님용 점검 <span style="font-size:.85rem;font-weight:500;opacity:.9">알티노 라이트 실기 확인 — 되는 것·안 되는 것을 적어 주세요</span></h1>
+  </div>
+  <div id="kitBar"></div>
+</div>
+
+
+<div class="stage">
+  <section class="card scroll">
+    <h2>🔗 연결 · 받는 값</h2>
+    <table class="kv">
+      <tr><td>로봇 이름</td><td id="rName">–</td></tr>
+      <tr><td>주소</td><td id="rAddr">–</td></tr>
+      <tr><td>기종(프레임)</td><td><span class="seg"><button id="mNeo">네오 26B</button><button id="mLite">라이트 22B</button></span></td></tr>
+      <tr><td>받는 속도</td><td><b id="rxHz">0</b> 프레임/초 · <b id="rxBps">0</b> 바이트/초</td></tr>
+      <tr><td>보내는 속도</td><td><b id="txHz">0</b> 프레임/초</td></tr>
+    </table>
+    <table class="kv" id="sens"></table>
+    <div class="lead">마지막으로 받은 바이트</div><div class="mono" id="rxHex">–</div>
+    <div class="lead">마지막으로 보낸 프레임</div><div class="mono" id="txHex">–</div>
+    <p class="lead">받는 속도가 0이면 기종 단추를 바꿔 보세요. 이름이 ALTINO-L… 이면 라이트로 자동 선택돼요.</p>
+  </section>
+
+  <section class="card">
+    <h2>🕹 움직임 <span class="lead" style="margin-left:auto">누르는 동안만</span></h2>
+    <div class="pad">
+      <button class="up" id="d-up">▲</button><button class="left" id="d-left">◀</button>
+      <button class="down" id="d-down">▼</button><button class="right" id="d-right">▶</button>
+    </div>
+    <label class="lead">속도 <b class="sv" id="spdVal">300</b><input id="spd" type="range" min="0" max="1000" step="10" value="300"></label>
+    <label class="lead">조향 세기 <b class="sv" id="strVal">100</b><input id="str" type="range" min="0" max="127" step="1" value="100"></label>
+    <p class="lead">◀▶만 누르면 제자리에서 앞바퀴만 꺾여요. 최저 출발 속도, 방향이 맞는지 확인해 주세요.</p>
+    <h2>🎵 소리</h2>
+    <div class="notes" id="notes"></div>
+    <div class="row"><input id="code" type="number" min="0" max="255" value="37" style="width:90px"><button id="beep" class="btn sm">이 코드 울리기</button></div>
+    <h2>🔴 도트</h2>
+    <div class="row"><button id="dotN" class="btn ghost sm">숫자 12</button><button id="dotS" class="btn ghost sm">웃음</button><button id="dotA" class="btn ghost sm">화살표 ↑←</button><button id="dotC" class="btn ghost sm">끄기</button><button id="dotCal" class="btn sm">방향 맞추기</button></div>
+  </section>
+
+  <section class="card scroll">
+    <h2>💡 LED 비트 <span class="lead" style="margin-left:auto">값 <b class="sv" id="mask">0</b></span></h2>
+    <div class="bits" id="bitsLo"></div>
+    <div class="lead">라이트는 아래 줄(1~128)만 써요. 위 줄은 네오의 윗바이트.</div>
+    <div class="bits" id="bitsHi"></div>
+    <div class="row"><button id="ledSave" class="btn sun sm">이 값을 '불빛 신호'로 저장</button><span class="lead">지금 저장값 <b id="ledSaved">15</b></span></div>
+    <h2>📏 앞쪽 센서 자리</h2>
+    <div class="row"><span class="lead">왼쪽 앞</span><select id="irL"></select><span class="lead">가운데</span><select id="irC"></select><span class="lead">오른쪽 앞</span><select id="irR"></select></div>
+    <p class="lead">손을 왼쪽 앞·가운데·오른쪽 앞에 대 보고, 값이 가장 크게 변하는 센서를 골라 주세요.</p>
+    <h2>📝 점검 결과 <button id="copy" class="btn sm" style="margin-left:auto">복사</button></h2>
+    <textarea id="report" readonly></textarea>
+  </section>
+</div>
+
+<script src="js/protocol.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dotmatrix.js"></script>
+<script src="js/transport.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/camp.js"></script>
+<script src="js/check.js"></script>
+</body>
+</html>

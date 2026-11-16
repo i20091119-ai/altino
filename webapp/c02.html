@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>② 표현 경기장 — 알티노 캠프</title>
+<link rel="stylesheet" href="css/camp.css" />
+<style>
+  .stage{grid-template-columns:.8fr 1.05fr 1fr}
+  .cardbox{align-items:center}
+  .targets{display:flex;gap:10px;justify-content:center;width:100%}
+  .targets .t{flex:1;max-width:190px;display:flex;flex-direction:column;gap:4px;align-items:center;font-size:.85rem;color:var(--mut)}
+  .targets .dots{width:100%}
+  .cover{width:100%;aspect-ratio:1;border-radius:16px;background:repeating-linear-gradient(45deg,var(--tint),var(--tint) 12px,#fff 12px,#fff 24px);display:flex;align-items:center;justify-content:center;font-size:2.6rem;border:2px dashed var(--theme2)}
+  .notes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;min-height:40px}
+  .note{min-width:46px;text-align:center;padding:7px 8px;border-radius:12px;font-weight:700;color:#fff;font-size:.95rem}
+  .slot{min-width:54px;height:46px;border-radius:12px;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+  .slot.fill{border-style:solid;border-color:transparent}
+  .slot.bad{outline:3px solid #ffd75e}
+  .pal{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .pal button{border:0;border-radius:14px;padding:12px 0;font-family:inherit;font-weight:700;font-size:1rem;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.16)}
+  .pal button:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.16)}
+  .draw{align-items:center}
+  .draw .dots{width:min(100%,330px)}
+  .tabs{display:flex;gap:6px}
+  .result{font-size:1.05rem;font-weight:700;text-align:center;min-height:1.5em}
+  .result.ok{color:var(--leaf)}.result.no{color:var(--coral)}
+  .count{font-size:1.6rem;font-weight:700;color:var(--theme)}
+</style>
+</head>
+<body data-arena="c02">
+
+<div class="topbar">
+  <div class="row">
+    <a class="back" href="index.html">← 캠프 홈</a>
+    <h1><span class="num">②</span>표현 경기장 <span style="font-size:.85rem;font-weight:500;opacity:.9">카드와 똑같이 표정과 소리 만들기</span></h1>
+  </div>
+  <div id="kitBar"></div>
+</div>
+<div id="chbar"></div>
+
+<div class="stage">
+  <section class="card cardbox">
+    <h2>🃏 카드 <span class="chip" id="limit" style="margin-left:auto;display:none">⏱ <b id="limitN">60</b>초</span></h2>
+    <div class="targets" id="targets"></div>
+    <div class="notes" id="tnotes"></div>
+    <button id="peek" class="btn hidden">👀 카드 보기 (10초)</button>
+    <button id="draw" class="btn ghost" style="margin-top:auto">🔀 새 카드 뽑기</button>
+  </section>
+  <section class="card draw">
+    <h2 style="align-self:stretch">✏ 내가 만든 표정
+      <span class="tabs" id="tabs" style="margin-left:auto"></span></h2>
+    <div class="dots" id="grid"></div>
+    <div class="row"><button id="clear" class="btn ghost sm">지우기</button><button id="calib" class="btn ghost sm">방향 맞추기</button></div>
+  </section>
+  <section class="card">
+    <h2>🎵 내가 만든 소리</h2>
+    <div class="notes" id="slots"></div>
+    <div class="pal" id="pal"></div>
+    <button id="clearNotes" class="btn ghost sm" style="align-self:flex-start">소리 지우기</button>
+    <div class="result" id="result"></div>
+    <div class="row" style="margin-top:auto">
+      <button id="send" class="btn ghost grow">📡 알티노에게 보내기</button>
+      <button id="submit" class="btn big grow">제출!</button>
+    </div>
+  </section>
+</div>
+
+<script src="js/protocol.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dotmatrix.js"></script>
+<script src="js/transport.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/camp.js"></script>
+<script src="js/c02.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>③ 암호 전달 경기장 — 알티노 캠프</title>
+<link rel="stylesheet" href="css/camp.css" />
+<style>
+  .stage{grid-template-columns:.9fr 1.3fr}
+  .code{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:110px;align-items:center;align-content:center;flex:1}
+  .code span{min-width:84px;height:104px;border-radius:20px;background:var(--tint);border:3px solid var(--theme2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:3rem;font-weight:700;color:var(--theme)}
+  .code span small{font-size:.85rem;color:var(--ink);margin-top:-2px}
+  .code .cover{width:100%;height:104px;border-radius:20px;background:repeating-linear-gradient(45deg,var(--tint),var(--tint) 12px,#fff 12px,#fff 24px);border:2px dashed var(--theme2);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:1rem}
+  .grp{display:grid;grid-template-columns:86px 1fr;gap:10px;align-items:center}
+  .grp>b{font-size:.95rem;color:var(--theme)}
+  .keys{display:grid;gap:8px}
+  .keys.k2{grid-template-columns:repeat(2,1fr)}.keys.k4{grid-template-columns:repeat(4,1fr)}.keys.k7{grid-template-columns:repeat(7,1fr)}
+  .keys .btn{padding:14px 4px;font-size:1.05rem}
+  .keys .shape{font-size:1.5rem;padding:10px 0}
+  .log{min-height:44px;background:var(--tint);border-radius:14px;padding:8px 12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:1.15rem}
+  .log .lead{font-size:.9rem}
+</style>
+</head>
+<body data-arena="c03">
+
+<div class="topbar">
+  <div class="row">
+    <a class="back" href="index.html">← 캠프 홈</a>
+    <h1><span class="num">③</span>암호 전달 경기장 <span style="font-size:.85rem;font-weight:500;opacity:.9">말없이 신호로만 — 우리 가족 암호</span></h1>
+  </div>
+  <div id="kitBar"></div>
+</div>
+<div id="chbar"></div>
+
+<div class="stage">
+  <section class="card">
+    <h2>🃏 보낼 암호 <span class="chip" id="limit" style="margin-left:auto;display:none">⏱ <b id="limitN">30</b>초</span></h2>
+    <div class="code" id="code"></div>
+    <p class="lead" id="hint" style="text-align:center">카드는 학생만 봐요. 보호자는 알티노만 보고 맞혀요.</p>
+    <div class="row" style="margin-top:auto">
+      <button id="show" class="btn grow">👀 카드 보기</button>
+      <button id="draw" class="btn ghost">🔀 새 카드</button>
+    </div>
+    <p class="lead">🤫 말·손짓·입 모양은 안 돼요. 신호는 우리 가족 암호표대로!</p>
+  </section>
+  <section class="card">
+    <h2>📡 신호 보내기</h2>
+    <div class="grp"><b>💡 불빛</b><div class="keys k2"><button class="btn sun" data-k="l1">짧게</button><button class="btn sun" data-k="l2">길 ─ 게</button></div></div>
+    <div class="grp"><b>🔔 소리</b><div class="keys k4">
+      <button class="btn sky" data-k="s1">낮게 짧게</button><button class="btn sky" data-k="s2">낮게 길게</button>
+      <button class="btn coral" data-k="s3">높게 짧게</button><button class="btn coral" data-k="s4">높게 길게</button></div></div>
+    <div class="grp"><b>🔴 도트</b><div class="keys k7" id="shapes"></div></div>
+    <div class="log" id="log"><span class="lead">보낸 신호가 여기에 차례로 보여요</span></div>
+    <div class="row" style="margin-top:auto"><button id="clearLog" class="btn ghost sm">기록 지우기</button><span class="lead">도트에 숫자를 그대로 띄우는 버튼은 없어요 — 암호로 바꿔 보내요</span></div>
+  </section>
+</div>
+
+<script src="js/protocol.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dotmatrix.js"></script>
+<script src="js/transport.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/camp.js"></script>
+<script src="js/c03.js"></script>
+</body>
+</html>

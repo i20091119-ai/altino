@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>④ 센서 자율주행 경기장 — 알티노 캠프</title>
+<link rel="stylesheet" href="css/camp.css" />
+<style>
+  .stage{grid-template-columns:1fr 1.1fr}
+  .sens{display:grid;grid-template-columns:86px 1fr 64px;gap:8px 10px;align-items:center;font-size:.95rem}
+  .sens b{color:var(--theme)}
+  .sens span{font-variant-numeric:tabular-nums;text-align:right;color:var(--mut)}
+  .calib{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .calib .btn{padding:14px 8px;font-size:1rem}
+  .calib .btn.done{background:var(--leaf)}
+  .play{align-items:center;justify-content:center;gap:14px;text-align:center}
+  .say{font-size:1.25rem;font-weight:700;min-height:1.6em}
+  .th{width:100%;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:.9rem;color:var(--mut)}
+</style>
+</head>
+<body data-arena="c04">
+
+<div class="topbar">
+  <div class="row">
+    <a class="back" href="index.html">← 캠프 홈</a>
+    <h1><span class="num">④</span>센서 자율주행 경기장 <span style="font-size:.85rem;font-weight:500;opacity:.9">손을 따라오고, 스스로 피해 가기</span></h1>
+  </div>
+  <div id="kitBar"></div>
+</div>
+<div id="chbar"></div>
+
+<div class="stage">
+  <section class="card">
+    <h2>📏 센서 맞추기 <span class="lead" style="margin-left:auto">로봇마다 한 번씩</span></h2>
+    <div class="calib">
+      <button id="calBase" class="btn sun">① 앞을 비우고<br>빈 곳 재기</button>
+      <button id="calHand" class="btn sun">② 손바닥을 10cm 앞에<br>손 대고 재기</button>
+    </div>
+    <p class="lead" id="calSay">①과 ②를 차례로 눌러 주세요. 알티노가 '가깝다'를 배워요.</p>
+    <h2>👀 지금 알티노가 느끼는 것</h2>
+    <div class="sens">
+      <b>왼쪽 앞</b><div class="bar"><i id="bL"></i></div><span id="vL">–</span>
+      <b>가운데</b><div class="bar"><i id="bC"></i></div><span id="vC">–</span>
+      <b>오른쪽 앞</b><div class="bar"><i id="bR"></i></div><span id="vR">–</span>
+    </div>
+    <p class="lead">막대가 길수록 가까워요. 손을 움직이면서 살펴봐요.</p>
+  </section>
+  <section class="card play">
+    <div style="font-size:4rem;line-height:1" id="ico">✋</div>
+    <div class="say" id="say">센서를 먼저 맞춰 주세요</div>
+    <div class="th hidden" id="thBox"><span>멀리서 피하기</span><input id="th" type="range" min="30" max="120" step="5" value="60"><span>가까이서 피하기</span></div>
+    <p class="lead hidden" id="thSay">기준값 <b id="thVal">60</b> — 숫자가 작을수록 멀리서부터 피해요</p>
+    <div class="row" style="justify-content:center">
+      <button id="start" class="btn big">▶ 시작</button>
+      <button id="stop" class="btn big coral hidden">■ 멈춰</button>
+    </div>
+    <p class="lead" id="tip">손을 알티노 앞에 두고 천천히 움직여요. 손이 없으면 멈춰요.</p>
+  </section>
+</div>
+
+<script src="js/protocol.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dotmatrix.js"></script>
+<script src="js/transport.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/camp.js"></script>
+<script src="js/c04.js"></script>
+</body>
+</html>

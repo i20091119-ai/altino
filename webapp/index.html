@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>알티노 캠프 — 2026 코딩앤메이커 with AI 캠프</title>
+<link rel="stylesheet" href="css/camp.css" />
+<style>
+  .topbar{padding:14px 20px}
+  .logo{display:flex;flex-direction:column;gap:4px}
+  .logo .l1{font-size:1.55rem;font-weight:700;letter-spacing:-.5px;color:#bfeaff;text-shadow:0 2px 0 rgba(40,20,90,.35)}
+  .logo .l1 em{font-style:normal;font-size:.8em;background:#bfeaff;color:var(--grape);border-radius:999px;padding:1px 9px;margin:0 3px;text-shadow:none}
+  .home{flex:1;min-height:0;display:grid;grid-template-columns:270px 1fr;gap:14px}
+  .side{display:flex;flex-direction:column;gap:12px;min-height:0}
+  .family{align-items:center;text-align:center}
+  .family img{width:128px;height:128px;object-fit:contain;margin-top:-4px}
+  .family input{width:100%;text-align:center;font-size:1.15rem;font-weight:700}
+  .total{background:linear-gradient(135deg,var(--grape),var(--sky));color:#fff;border:0;align-items:center;text-align:center;gap:2px}
+  .total .n{font-size:3rem;font-weight:700;line-height:1}
+  .total .lead{color:rgba(255,255,255,.85)}
+  .main{display:flex;flex-direction:column;gap:10px;min-height:0}
+  .sec{display:flex;align-items:center;gap:10px;font-size:1.05rem;font-weight:700;color:var(--grape)}
+  .sec small{font-weight:500;color:var(--mut);font-size:.85rem}
+  .arenas{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;flex:1;min-height:0}
+  .arena{position:relative;border-radius:24px;text-decoration:none;color:#fff;padding:14px 14px 12px;display:flex;flex-direction:column;gap:4px;overflow:hidden;
+    box-shadow:0 8px 0 rgba(0,0,0,.14),0 18px 28px rgba(70,50,130,.2);transition:transform .08s}
+  .arena:active{transform:translateY(5px)}
+  .arena::after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.16);right:-60px;bottom:-70px}
+  .arena .no{font-size:1.5rem;font-weight:700;opacity:.95}
+  .arena .em{font-size:4.2rem;line-height:1.1;margin:10px 0 6px}
+  .arena .nm{font-size:1.35rem;font-weight:700}
+  .arena .sb{font-size:.86rem;opacity:.95;line-height:1.4;flex:1}
+  .arena .st{position:relative;z-index:1;align-self:flex-start;background:rgba(255,255,255,.95);color:var(--ink);border-radius:999px;padding:4px 11px;font-size:.84rem;font-weight:700}
+  .a1{background:linear-gradient(160deg,#7d55b3,#a57fd8)}.a2{background:linear-gradient(160deg,#f0619a,#ff9cc3)}
+  .a3{background:linear-gradient(160deg,#1fae8d,#62d9be)}.a4{background:linear-gradient(160deg,#e79a12,#ffc95a)}
+  .a5{background:linear-gradient(160deg,#3a9be0,#7fcbff)}
+  .lessons{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;flex:none}
+  .lesson{background:#fff;border:2px solid var(--line);border-radius:20px;text-decoration:none;color:var(--ink);padding:12px 12px 14px;display:flex;flex-direction:column;gap:3px;box-shadow:0 5px 0 var(--line);margin-bottom:5px}
+  .lesson:active{transform:translateY(4px);box-shadow:0 1px 0 var(--line)}
+  .lesson .em{font-size:1.9rem;line-height:1.15}
+  .lesson .nm{font-size:.98rem;font-weight:700}
+  .lesson .sb{font-size:.76rem;color:var(--mut)}
+  .foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--mut);font-size:.85rem}
+  .foot a{color:var(--mut)}
+</style>
+</head>
+<body data-arena="c01">
+
+<div class="topbar">
+  <div class="logo">
+    <div class="l1">2026 코딩앤메이커 <em>with</em> AI 캠프</div>
+    <div><span class="pill">알티노 로봇학교</span></div>
+  </div>
+  <div id="kitBar"></div>
+</div>
+
+<div class="home">
+  <aside class="side">
+    <section class="card family">
+      <img src="assets/mascot-happy.png" alt="" />
+      <h2 style="justify-content:center">우리 가족</h2>
+      <input id="famName" type="text" maxlength="12" placeholder="가족 번호·이름" />
+      <p class="lead">예: 07 하늘이네</p>
+    </section>
+    <section class="card total">
+      <div class="lead">우리 가족 점수</div>
+      <div class="n"><span id="total">0</span><small style="font-size:1.1rem"> 점</small></div>
+      <div class="lead">최고 285점 · 연습 기록이에요</div>
+    </section>
+    <button id="resetBtn" class="btn ghost sm">기록 지우기</button>
+  </aside>
+
+  <main class="main">
+    <div class="sec">🏁 시험 경기장 <small>배운 것을 경기장에서 시험해요 · 단계가 높을수록 점수가 커요</small></div>
+    <div class="arenas" id="arenas"></div>
+    <div class="sec">📚 수업 <small>알티노에게 하나씩 가르쳐요</small></div>
+    <div class="lessons" id="lessons"></div>
+    <div class="foot">
+      <span>조작은 학생만 · 보호자는 기록·질문·안전</span>
+      <span class="row" style="gap:14px">
+        <a href="check.html">🔧 선생님용 점검</a>
+        <button id="updBtn" class="btn ghost sm">업데이트 확인</button>
+        <span id="appVer"></span>
+      </span>
+    </div>
+  </main>
+</div>
+
+<script src="js/protocol.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dotmatrix.js"></script>
+<script src="js/transport.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/camp.js"></script>
+<script src="js/home.js"></script>
+<script src="js/update.js"></script>
+</body>
+</html>
