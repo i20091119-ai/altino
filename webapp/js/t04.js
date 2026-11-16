@@ -1,7 +1,7 @@
 // t04 노래 가르치기 (7–8차시) — 기획서 docs/topics/t04.md
 // ① 높은 소리 낮은 소리(건반 + 귀 기울이기 놀이: 높낮이 · 차례가기/뛰어가기)
 // → ② 가락 바꾸기(원곡 한 줄을 계이름 블록 악보로 가르치기 → 마지막 줄 바꾸기)
-// → ③ 두 알티노의 어울림(짝 모둠과 동시에 길게 — 어울리는 짝 찾기, 메기고 받기)
+// → ③ 두 알티노의 어울림(옆 가족과 동시에 길게 — 어울리는 짝 찾기, 메기고 받기)
 // 부저는 실측된 8음만(03 §4). 3~4학년 음악 요소: 음의 높고 낮음·차례가기와 뛰어가기·음의 길고 짧음·소리의 어울림
 'use strict';
 (function () {
@@ -228,7 +228,7 @@
     $('pairs').appendChild(c);
   });
   function judgePair(saidGood) {
-    if (ours == null || theirs == null) { kit.toast('우리 음을 눌러 보고, 짝 모둠 음을 골라요'); return; }
+    if (ours == null || theirs == null) { kit.toast('우리 음을 눌러 보고, 옆 가족 음을 골라요'); return; }
     if (ours === theirs) { $('pairMsg').textContent = '같은 음이에요. 다른 음으로 해 봐요.'; return; }
     const truth = consonant(ours, theirs), key = [ours, theirs].sort().join('-');
     const pairName = `${NOTES[Math.min(ours, theirs)].n}+${NOTES[Math.max(ours, theirs)].n}`;

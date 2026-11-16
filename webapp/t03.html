@@ -94,7 +94,7 @@
 <div class="topbar">
   <div class="row">
     <a href="index.html">← 캠프 홈</a>
-    <h1 style="margin:0;font-size:1.25rem">🙂 표정 만들기 <span class="lead" style="display:inline">5–6차시 · 도트매트릭스</span></h1>
+    <h1 style="margin:0;font-size:1.25rem">🙂 표정 만들기 <span class="lead" style="display:inline">도트매트릭스</span></h1>
   </div>
   <div id="kitBar"></div>
 </div>
@@ -131,7 +131,7 @@
       <h2>🃏 상황 카드 — 하나 골라요</h2>
       <div class="cards" id="cards"></div>
       <p class="situ" id="situ">카드를 고르면 상황이 나와요.</p>
-      <p class="lead">이럴 때 마음은? 모둠이 이야기하고 골라요.</p>
+      <p class="lead">이럴 때 마음은? 아이와 보호자가 이야기하고 골라요.</p>
       <div class="feel" id="feel"></div>
     </section>
     <section class="card">
@@ -149,21 +149,21 @@
   <!-- ③ 표정 맞히기 시험 -->
   <div class="page hidden" data-page="3">
     <section class="card">
-      <h2>🏅 표정 맞히기 시험 — 다른 모둠이 알티노 얼굴만 보고 맞혀요</h2>
+      <h2>🏅 표정 맞히기 시험 — 보호자가 알티노 얼굴만 보고 맞혀요</h2>
       <div class="tries" id="tries"></div>
       <p class="say" id="testMsg">표정 4개를 저장하면 시작할 수 있어요.</p>
       <ol class="lead" style="font-size:1rem;line-height:1.7;color:var(--ink)">
-        <li>출제자가 ▶ 표정 내기를 눌러요. 화면은 친구에게 보여 주지 않아요.</li>
-        <li>다른 모둠이 상황 카드 중에서 골라 말해요.</li>
-        <li>기록원이 ⭕·❌를 눌러요.</li>
+        <li>아이가 ▶ 표정 내기를 눌러요. 화면은 보호자에게 보여 주지 않아요.</li>
+        <li>보호자가 상황 카드 중에서 골라 말해요.</li>
+        <li>아이가 ⭕·❌를 눌러요.</li>
       </ol>
     </section>
     <section class="card center">
-      <h2>🙈 출제자만 보는 칸</h2>
+      <h2>🙈 아이만 보는 칸</h2>
       <button id="ask" class="btn mint big" disabled>▶ 표정 내기</button>
       <p class="say" id="answer"></p>
       <div id="judgeBox" class="hidden">
-        <p class="say">친구가 맞혔나요?</p>
+        <p class="say">보호자가 맞혔나요?</p>
         <div class="judge"><button id="judgeOk" class="btn mint">⭕ 맞혔어요</button><button id="judgeNo" class="btn coral">❌ 못 맞혔어요</button></div>
       </div>
       <div id="resultBox" class="result hidden"></div>
@@ -187,10 +187,10 @@
     </section>
     <section class="card">
       <h2>✂ 선택 — 칸 줄이기 도전</h2>
-      <p class="lead">① 그림판에 그린 표정을 친구가 알아보면 기록해요. 칸이 적을수록 대단해요!</p>
+      <p class="lead">① 그림판에 그린 표정을 보호자가 알아보면 기록해요. 칸이 적을수록 대단해요!</p>
       <div class="feel" id="feel4"></div>
       <p class="count" id="count4">지금 ① 그림판: 0칸</p>
-      <div class="row" style="justify-content:center"><button id="rec4" class="btn mint">⭕ 친구가 알아봤어요 — 기록</button></div>
+      <div class="row" style="justify-content:center"><button id="rec4" class="btn mint">⭕ 보호자가 알아봤어요 — 기록</button></div>
       <table class="best" id="best4"></table>
     </section>
   </div>

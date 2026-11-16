@@ -1,4 +1,4 @@
-// 캠프 홈 — 경기장 5종 + 수업 6개 + 우리 가족 점수
+// 캠프 홈 — 경기장 5종 + 수업 6개 + 우리 가족 점수. 이름 칸 = 알티노 이름(t01 에서 짓는 것과 같은 값)
 'use strict';
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -27,7 +27,7 @@
   }
 
   $('famName').value = kit.team.get();
-  $('famName').addEventListener('change', (e) => { kit.team.set(e.target.value); kit.toast('👥 ' + (kit.team.get() || '이름을 지웠어요')); });
+  $('famName').addEventListener('change', (e) => { kit.team.set(e.target.value); kit.toast('🏷 ' + (kit.team.get() || '이름을 지웠어요')); });
   $('resetBtn').onclick = async () => {
     if (!await kit.confirm({ title: '이 태블릿의 기록을 지울까요?', lines: ['경기장 연습 기록이 모두 지워져요.'], okText: '지우기', danger: true })) return;
     Camp.results.clear(); render(); kit.toast('기록을 지웠어요');

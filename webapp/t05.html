@@ -95,7 +95,7 @@
 <div class="topbar">
   <div class="row">
     <a href="index.html">← 캠프 홈</a>
-    <h1 style="margin:0;font-size:1.25rem">💡 비밀 신호 보내기 <span class="lead" style="display:inline">9–10차시 · 라이트·경적</span></h1>
+    <h1 style="margin:0;font-size:1.25rem">💡 비밀 신호 보내기 <span class="lead" style="display:inline">라이트·경적</span></h1>
   </div>
   <div id="kitBar"></div>
 </div>
@@ -103,7 +103,7 @@
 <!-- ✎ 단계 표시 -->
 <div class="steps" id="steps">
   <button data-step="1">① 자동차 불빛의 뜻</button>
-  <button data-step="2">② 모둠 신호 만들기</button>
+  <button data-step="2">② 우리 신호 만들기</button>
   <button data-step="3">③ 말 없이 전하기 시험</button>
   <button data-step="4">④ 더 해 보기</button>
 </div>
@@ -132,7 +132,7 @@
     </section>
   </div>
 
-  <!-- ② 모둠 신호 만들기 -->
+  <!-- ② 우리 신호 만들기 -->
   <div class="page hidden" data-page="2">
     <section class="card">
       <h2>✏ 신호 만들기 — 뜻을 고르고 블록을 놓아요</h2>
@@ -148,7 +148,7 @@
       <p class="lead">💡 자주 쓰는 말은 짧게 · 신호는 서로 달라야 구별돼요</p>
     </section>
     <section class="card">
-      <h2>📋 우리 모둠 신호표</h2>
+      <h2>📋 우리 가족 신호표</h2>
       <table class="sigs" id="sigTable"></table>
       <p class="warn" id="warn2"></p>
       <p class="say" id="msg2"></p>
@@ -158,22 +158,22 @@
   <!-- ③ 말 없이 전하기 시험 -->
   <div class="page hidden" data-page="3">
     <section class="card">
-      <h2>🏅 말 없이 전하기 — 받는 모둠은 신호표를 보고 뜻을 맞혀요</h2>
+      <h2>🏅 말 없이 전하기 — 보호자는 신호표를 보고 뜻을 맞혀요</h2>
       <div class="tries" id="tries"></div>
       <p class="say" id="testMsg"></p>
       <ol class="lead" style="font-size:1rem;line-height:1.7;color:var(--ink)">
-        <li>우리 신호표를 받는 모둠에게 보여 줘요.</li>
-        <li>전달자가 ▶ 신호 보내기를 눌러요. 말은 하지 않아요.</li>
-        <li>받는 모둠이 뜻을 말하면 기록원이 ⭕·❌를 눌러요.</li>
+        <li>신호표를 보호자에게 보여 줘요.</li>
+        <li>아이가 ▶ 신호 보내기를 눌러요. 말은 하지 않아요.</li>
+        <li>보호자가 뜻을 말하면 아이가 ⭕·❌를 눌러요.</li>
       </ol>
     </section>
     <section class="card center">
-      <h2>🙈 전달자만 보는 칸</h2>
+      <h2>🙈 아이만 보는 칸</h2>
       <button id="send" class="btn mint big">▶ 신호 보내기</button>
       <button id="stop3" class="btn coral big hidden">■ 멈춰</button>
       <p class="say" id="answer"></p>
       <div id="judgeBox" class="hidden">
-        <p class="say">받는 모둠이 맞혔나요?</p>
+        <p class="say">보호자가 맞혔나요?</p>
         <div class="judge"><button id="judgeOk" class="btn mint">⭕ 맞혔어요</button><button id="judgeNo" class="btn coral">❌ 못 맞혔어요</button></div>
       </div>
       <div id="resultBox" class="result hidden"></div>

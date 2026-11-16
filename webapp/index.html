@@ -7,6 +7,10 @@
 <link rel="stylesheet" href="css/camp.css" />
 <style>
   .topbar{padding:14px 20px}
+  .brand{display:flex;align-items:center;gap:14px}
+  /* 진주교대 시그니춰(좌우조합형 한글): 색을 바꾸지 않고 흰 바탕 위에 둔다 */
+  .cue{flex:none;background:#fff;border-radius:16px;padding:9px 14px;display:flex;align-items:center;box-shadow:0 3px 0 rgba(40,20,90,.18)}
+  .cue img{height:34px;width:auto;display:block}
   .logo{display:flex;flex-direction:column;gap:4px}
   .logo .l1{font-size:1.55rem;font-weight:700;letter-spacing:-.5px;color:#bfeaff;text-shadow:0 2px 0 rgba(40,20,90,.35)}
   .logo .l1 em{font-style:normal;font-size:.8em;background:#bfeaff;color:var(--grape);border-radius:999px;padding:1px 9px;margin:0 3px;text-shadow:none}
@@ -47,9 +51,12 @@
 <body data-arena="c01">
 
 <div class="topbar">
-  <div class="logo">
-    <div class="l1">2026 코딩앤메이커 <em>with</em> AI 캠프</div>
-    <div><span class="pill">알티노 로봇학교</span></div>
+  <div class="brand">
+    <div class="cue"><img src="assets/cue-logo.png" alt="진주교육대학교" /></div>
+    <div class="logo">
+      <div class="l1">2026 코딩앤메이커 <em>with</em> AI 캠프</div>
+      <div><span class="pill">알티노 로봇학교</span></div>
+    </div>
   </div>
   <div id="kitBar"></div>
 </div>
@@ -57,10 +64,10 @@
 <div class="home">
   <aside class="side">
     <section class="card family">
-      <img src="assets/mascot-happy.png" alt="" />
-      <h2 style="justify-content:center">우리 가족</h2>
-      <input id="famName" type="text" maxlength="12" placeholder="가족 번호·이름" />
-      <p class="lead">예: 07 하늘이네</p>
+      <img src="assets/camp-car.png" alt="" />
+      <h2 style="justify-content:center">우리 알티노</h2>
+      <input id="famName" type="text" maxlength="12" placeholder="알티노 이름" />
+      <p class="lead">입학식에서 지은 이름이에요</p>
     </section>
     <section class="card total">
       <div class="lead">우리 가족 점수</div>

@@ -1,6 +1,6 @@
 // t02 알티노 걸음마 가르치기 (3–4차시) — 기획서 docs/topics/t02.md
 // ① 걸음마 연습(패드·속도 막대·구령 놀이) → ② 속도의 비밀 찾기(앱이 재는 3초 달리기)
-// → ③ 걸음마 시험(앞으로 버튼 한 번, 기록원이 성공·실패, 3번 중 2번 성공이면 합격)
+// → ③ 걸음마 시험(앞으로 버튼 한 번, 보호자가 성공·실패, 3번 중 2번 성공이면 합격)
 'use strict';
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -197,7 +197,7 @@
   }
 
   // ── ③ 걸음마 시험 ────────────────────────────────────────────────
-  // test = { speed, results: [true/false…] }  — 판정은 기록원이 줄자로(바닥 센서가 없다, 03 §10)
+  // test = { speed, results: [true/false…] }  — 판정은 보호자가 줄자로(바닥 센서가 없다, 03 §10)
   let test = kit.store.get('test', null);
   if (!test || !BADGES.some(b => b.speed === test.speed) || !Array.isArray(test.results)) test = null;
   let phase = 'pick';   // pick | ready | driving | judge | done
@@ -269,9 +269,9 @@
     $('retry').classList.toggle('hidden', phase !== 'done');
     const b = test && badgeOf(test.speed);
     $('testMsg').textContent = phase === 'pick' ? '속도를 고르면 시작해요.'
-      : phase === 'ready' ? `${res.length + 1}번째 도전! 신호원이 "출발!" 하면 눌러요.`
+      : phase === 'ready' ? `${res.length + 1}번째 도전! 보호자가 "출발!" 하면 눌러요.`
       : phase === 'driving' ? '정지선 앞에서 손을 떼요!'
-      : phase === 'judge' ? '기록원이 판정해요.'
+      : phase === 'judge' ? '보호자가 판정해요.'
       : wins() >= PASS ? '합격! 박수!' : '아깝다! 다시 도전해요.';
     if (phase === 'done') {
       $('resultBox').innerHTML = wins() >= PASS

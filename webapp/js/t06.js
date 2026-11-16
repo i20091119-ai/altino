@@ -208,7 +208,7 @@
     $('judgeBox').classList.toggle('hidden', fphase !== 'judge');
     $('resultBox').classList.toggle('hidden', fphase !== 'done');
     $('baseMsg').textContent = fphase === 'zeroing' ? '영점 재는 중… 손을 떼요' : base ? `영점 ✓ (${base.ir1} · ${base.ir2} · ${base.ir3})` : '영점 전 — ① 영점 잡기';
-    if (fphase !== 'following') showHand(fphase === 'judge' ? '멈췄어요. 기록원이 판정해요' : '손을 기다려요', '⏸');
+    if (fphase !== 'following') showHand(fphase === 'judge' ? '멈췄어요. 보호자가 판정해요' : '손을 기다려요', '⏸');
   }
 
   // ── ④ 심화: 밀고 당기기 ──────────────────────────────────────────

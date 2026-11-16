@@ -1,6 +1,6 @@
 // t03 표정 만들기 (5–6차시) — 기획서 docs/topics/t03.md
 // ① 64칸 얼굴 탐색(그림판 = 알티노 도트) → ② 상황 카드 표정 짓기(마음 고르기 + 표정 저장 4장)
-// → ③ 표정 맞히기 시험(다른 모둠이 맞힘, 기록원 ⭕/❌) → ④ 더 해 보기(움직이는 표정 · 칸 줄이기)
+// → ③ 표정 맞히기 시험(보호자가 맞힘, 아이가 ⭕/❌) → ④ 더 해 보기(움직이는 표정 · 칸 줄이기)
 'use strict';
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -166,7 +166,7 @@
       const best = kit.store.num('bestStars', 0, 0, 3);
       if (s > best) {                                   // 기록부에는 가장 좋은 결과 한 줄만 (05 §7)
         kit.store.set('bestStars', s);
-        kit.record.add({ title: '표정 맞히기 시험 합격', detail: `친구가 알아본 표정 ${wins()} / ${TESTN}`, stars: s });
+        kit.record.add({ title: '표정 맞히기 시험 합격', detail: `보호자가 알아본 표정 ${wins()} / ${TESTN}`, stars: s });
       }
     }
     renderTest();
@@ -186,13 +186,13 @@
     $('resultBox').classList.toggle('hidden', phase !== 'done');
     $('retry').classList.toggle('hidden', phase !== 'done');
     $('testMsg').textContent = !ready ? `표정 ${CARDS.length}개를 저장하면 시작할 수 있어요. (지금 ${Object.keys(faces).length}개)`
-      : phase === 'judge' ? '친구가 상황을 맞혀 보는 중…'
-      : phase === 'done' ? `친구가 ${wins()}개를 알아봤어요.`
-      : `${res.length + 1}번째 표정! 출제자가 눌러요.`;
+      : phase === 'judge' ? '보호자가 상황을 맞혀 보는 중…'
+      : phase === 'done' ? `보호자가 ${wins()}개를 알아봤어요.`
+      : `${res.length + 1}번째 표정! 아이가 눌러요.`;
     if (phase === 'done') {
       const s = starsOf(wins());
       $('resultBox').innerHTML = s ? `<span class="m">🎭</span><b>표정 맞히기 합격!</b><br>${'⭐'.repeat(s)} · ${wins()} / ${TESTN}`
-        : `<span class="m">💪</span><b>아깝다!</b><br>친구가 못 알아본 표정을 고쳐서 다시 도전해요.`;
+        : `<span class="m">💪</span><b>아깝다!</b><br>보호자가 못 알아본 표정을 고쳐서 다시 도전해요.`;
     }
   }
 

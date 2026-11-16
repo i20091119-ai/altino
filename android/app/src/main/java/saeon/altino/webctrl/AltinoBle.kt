@@ -107,6 +107,21 @@ class AltinoBle(
     // 재연결 타이머가 끼어들어 멀쩡한 핸드셰이크를 부수던 문제가 있었다.
     @Volatile private var connecting = false
     @Volatile private var negotiatedMtu = 23
+
+    // ---- 진단(점검 화면 getDiag) — 캠프 앱에서 보탬 ----
+    // '연결됐는데 답이 없다'가 어느 층의 문제인지(특성을 잘못 골랐나 · 쓰기가 실패하나 · 로봇이 답을 안 하나) 가르기 위한 숫자들.
+    @Volatile private var gattDump = ""          // 서비스·특성 표
+    @Volatile private var cccdState = "-"        // ok / none / fail:<코드>
+    @Volatile private var wOk = 0
+    @Volatile private var wFail = 0
+    @Volatile private var wReject = 0
+    @Volatile private var lastWStatus = 0
+    @Volatile private var rxPkts = 0
+    @Volatile private var rxTotal = 0
+    @Volatile private var links = 0
+    @Volatile private var lastDisc = "-"
+    @Volatile private var rxSeenOnLink = false   // 이 연결에서 한 번이라도 받았나
+    @Volatile private var staleNoRx = 0          // 한 번도 못 받은 채 '죽은 링크'로 끊은 횟수(연속)
     private var lastCloseAt = 0L
 
     @Volatile private var boundAddress: String? = prefs.getString(KEY_ADDR, null)
@@ -174,7 +189,13 @@ class AltinoBle(
         override fun run() {
             if (!isConnected) return
             val now = SystemClock.elapsedRealtime()
-            if (now - lastTxAt < 4_000L && now - lastRxAt > 8_000L) {
+            // 앱을 켠 뒤 이 로봇에서 한 바이트도 받은 적이 없으면 끊지 않는다. 그건 죽은 링크가 아니라
+            // 프레임(또는 특성)이 안 맞는 것이다 — 끊으면 '연결됨↔재연결'만 되풀이하고, 그때마다 기종 찾기가
+            // 처음부터 다시 돌아 점검을 못 한다(2026-11-17 실기). 이제 남는 끊김은 로봇·OS 쪽 것이고 진단의 '끊김'에 이유가 남는다.
+            val giveUp = !rxSeenOnLink && rxPkts == 0
+            if (!giveUp && now - lastTxAt < 4_000L && now - lastRxAt > 8_000L) {
+                if (!rxSeenOnLink) staleNoRx++
+                lastDisc = "stale"
                 Log.w(TAG, "stale link (tx ok, no rx 8s) → force reconnect")
                 isConnected = false
                 closeGatt()
@@ -388,6 +409,7 @@ class AltinoBle(
                     else -> "code-$statusCode"
                 }
                 isConnected = false; connecting = false
+                lastDisc = reason
                 main.removeCallbacks(connectDeadline)
                 closeGatt()
                 status("disconnected:$reason")
@@ -416,9 +438,11 @@ class AltinoBle(
                 g.setCharacteristicNotification(n, true)
                 val d = n.getDescriptor(CCCD)
                 if (d != null) {
-                    enqueue(Op.Descriptor(d, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE))
+                    val onlyIndicate = (n.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY) == 0
+                    enqueue(Op.Descriptor(d, if (onlyIndicate) BluetoothGattDescriptor.ENABLE_INDICATION_VALUE else BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE))
                 } else {
                     // CCCD 없으면 알림만 켜고 바로 연결 확정
+                    cccdState = "none"
                     reconnectAttempts = 0; isConnected = true; connecting = false
                     main.removeCallbacks(connectDeadline); onLinkUp(); status("connected")
                 }
@@ -431,14 +455,19 @@ class AltinoBle(
         }
         override fun onDescriptorWrite(g: BluetoothGatt, d: BluetoothGattDescriptor, statusCode: Int) {
             if (statusCode == BluetoothGatt.GATT_SUCCESS) {
+                cccdState = "ok"
                 reconnectAttempts = 0; isConnected = true; connecting = false
                 main.removeCallbacks(connectDeadline); onLinkUp(); status("connected")   // ★ 여기서 connected
             } else {
+                cccdState = "fail:$statusCode"
                 status("error:notify-failed"); connecting = false; closeGatt(); scheduleReconnect()
             }
             opDone()
         }
-        override fun onCharacteristicWrite(g: BluetoothGatt, ch: BluetoothGattCharacteristic, statusCode: Int) { opDone() }
+        override fun onCharacteristicWrite(g: BluetoothGatt, ch: BluetoothGattCharacteristic, statusCode: Int) {
+            if (statusCode == BluetoothGatt.GATT_SUCCESS) wOk++ else { wFail++; lastWStatus = statusCode }
+            opDone()
+        }
         // 수신(버전별 시그니처 둘 다 대응 — 정확히 한 경로만 발화)
         @Suppress("DEPRECATION")
         override fun onCharacteristicChanged(g: BluetoothGatt, ch: BluetoothGattCharacteristic) {
@@ -452,6 +481,7 @@ class AltinoBle(
     private fun emitData(v: ByteArray?) {
         val bytes = v ?: return
         lastRxAt = SystemClock.elapsedRealtime()
+        rxPkts++; rxTotal += bytes.size; rxSeenOnLink = true; staleNoRx = 0
         val b64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
         postToJs("window.__altinoOnData && window.__altinoOnData('$b64');")
     }
@@ -460,6 +490,7 @@ class AltinoBle(
     private fun onLinkUp() {
         val now = SystemClock.elapsedRealtime()
         lastRxAt = now; lastTxAt = 0L
+        links++; rxSeenOnLink = false
         main.removeCallbacks(liveness)
         main.postDelayed(liveness, 3_000L)
     }
@@ -481,15 +512,66 @@ class AltinoBle(
             if (w == null && canWrite && HINT_UUIDS.contains(id)) w = ch
             if (n == null && canNotify && HINT_UUIDS.contains(id)) n = ch
         }
+        // 아는 UUID 가 없을 때: 표준 서비스(0x18xx — 기기 이름, Service Changed 등)는 빼고 고른다.
+        // 예전에는 '알림 되는 첫 특성'을 그냥 집어서, UART 가 아닌 Service Changed(0x2A05)를 듣고 있을 수 있었다.
+        fun std(ch: BluetoothGattCharacteristic) = isStdService(ch.service?.uuid)
         if (w == null || n == null) {
-            val both = writable.firstOrNull { notifiable.contains(it) }
-            if (both != null) { if (w == null) w = both; if (n == null) n = both }
+            for (svc in g.services) {
+                if (isStdService(svc.uuid)) continue
+                val ws = svc.characteristics.filter { writable.contains(it) }
+                val ns = svc.characteristics.filter { notifiable.contains(it) }
+                if (ws.isEmpty() || ns.isEmpty()) continue
+                if (w == null) w = ws.firstOrNull { (it.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0 } ?: ws.first()
+                if (n == null) n = ns.firstOrNull { (it.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0 } ?: ns.first()
+                break
+            }
         }
-        if (w == null) w = writable.firstOrNull()
-        if (n == null) n = notifiable.firstOrNull()
+        if (w == null) w = writable.firstOrNull { !std(it) } ?: writable.firstOrNull()
+        if (n == null) n = notifiable.firstOrNull { !std(it) } ?: notifiable.firstOrNull()
         writeCh = w; notifyCh = n
+        gattDump = try {
+            g.services.joinToString(" | ") { svc ->
+                shortUuid(svc.uuid) + "[" + svc.characteristics.joinToString(", ") { ch ->
+                    shortUuid(ch.uuid) + ":" + propsOf(ch) + (if (ch === w) "*W" else "") + (if (ch === n) "*N" else "")
+                } + "]"
+            }
+        } catch (e: Exception) { "?" }
         Log.i(TAG, "picked write=${w?.uuid} notify=${n?.uuid} mtu=$negotiatedMtu")
     }
+
+    private fun isStdService(u: UUID?): Boolean {
+        val t = (u ?: return false).toString().lowercase()
+        return t.startsWith("000018") && t.endsWith("-0000-1000-8000-00805f9b34fb")
+    }
+    // 16비트 표준 UUID 는 4자리로, 그 밖은 앞 8자리로 줄여 적는다
+    private fun shortUuid(u: UUID): String {
+        val t = u.toString().lowercase()
+        return if (t.endsWith("-0000-1000-8000-00805f9b34fb")) t.substring(4, 8) else t.substring(0, 8)
+    }
+    private fun propsOf(ch: BluetoothGattCharacteristic): String {
+        val p = ch.properties; val sb = StringBuilder()
+        if ((p and BluetoothGattCharacteristic.PROPERTY_READ) != 0) sb.append('r')
+        if ((p and BluetoothGattCharacteristic.PROPERTY_WRITE) != 0) sb.append('w')
+        if ((p and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) sb.append('c')   // c = 응답 없는 쓰기(command)
+        if ((p and BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0) sb.append('n')
+        if ((p and BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0) sb.append('i')
+        return sb.toString()
+    }
+
+    /** 점검 화면용: 어떤 특성을 골랐고, 쓰기가 성공하는지, 받은 게 있는지. */
+    @JavascriptInterface
+    fun getDiag(): String = try {
+        JSONObject()
+            .put("mtu", negotiatedMtu)
+            .put("write", writeCh?.uuid?.toString() ?: "")
+            .put("notify", notifyCh?.uuid?.toString() ?: "")
+            .put("cccd", cccdState)
+            .put("wOk", wOk).put("wFail", wFail).put("wReject", wReject).put("lastWStatus", lastWStatus)
+            .put("rxPkts", rxPkts).put("rxBytes", rxTotal)
+            .put("links", links).put("lastDisc", lastDisc)
+            .put("gatt", gattDump)
+            .toString()
+    } catch (e: Exception) { "{}" }
 
     // ---- 직렬 큐 ----
     // 락은 '큐를 만지는 동안'만 잡는다. 실제 GATT 호출은 gattExec 에서, 락 없이.
@@ -533,6 +615,7 @@ class AltinoBle(
         } catch (e: Exception) { Log.e(TAG, "pump op", e); false }
         // 호출 자체가 거부되면 콜백이 안 오므로 여기서 다음 것으로 넘긴다.
         if (!ok) {
+            if (op is Op.Write) wReject++
             synchronized(this) { cancelWatchdog(); busy = false }
             pump()
         }
@@ -573,8 +656,10 @@ class AltinoBle(
     // (altinoLite.dart requestData). 네오(26바이트)는 MTU 185 가 잡혀 그대로 한 번에 간다.
     private fun chunks(d: ByteArray): List<ByteArray> {
         val max = negotiatedMtu - 3
-        if (d.size <= max) return listOf(d)
+        // 라이트(22바이트)는 MTU 와 상관없이 오케스트라와 똑같이 14+8 로 나눠 쓴다 — 실물이 한 번에 쓴 22바이트를
+        // 받아들이는지 확인되지 않았다(2026-11-17 실기: 답 없음). 확인된 방식만 따라 한다.
         if (d.size == 22 && max >= 14) return listOf(d.copyOfRange(0, 14), d.copyOfRange(14, 22))
+        if (d.size <= max) return listOf(d)
         val n = maxOf(1, max)
         return (d.indices step n).map { d.copyOfRange(it, minOf(it + n, d.size)) }
     }
