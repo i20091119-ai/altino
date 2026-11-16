@@ -92,6 +92,9 @@
         'border-radius:12px;padding:10px 12px;max-height:130px;overflow:auto">' +
         String(r.notes).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>') + '</div>' : ''));
     yes('지금 업데이트', () => {
+      // 허용 여부는 누를 때마다 다시 묻는다. 화면을 열 때 읽은 값을 그대로 쓰면, 허용하고 돌아와도
+      // 계속 '허용이 필요해요'만 뜬다(2026-11-17 실기).
+      try { info = JSON.parse(U.info() || '{}'); } catch (e) {}
       if (info.canInstall === false) {
         set('🔐', '한 번만 허용이 필요해요',
           '안드로이드 보안 정책상 <b>이 앱이 앱을 설치</b>하도록 한 번 허용해야 해요.<br>' +
