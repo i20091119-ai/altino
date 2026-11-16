@@ -38,5 +38,14 @@ const KEY = 'altino.model.AA:BB:CC:DD:B7:CE';
   ok(await p.evaluate((k) => localStorage.getItem(k), KEY) === 'classic', '기종을 로봇 주소에 고쳐 적음');
   await p.goto(base + '/t01.html'); await p.waitForTimeout(400);
   ok(await p.evaluate(() => AltinoProtocol.getModel()) === 'classic', '다른 화면에서도 바로 구형');
+  // 구형은 조향을 1.75배로 키워 보낸다(점검 화면은 그대로)
+  await p.evaluate(() => window.__altinoKit.drive(0, 57)); await p.waitForTimeout(350);
+  ok(await p.evaluate(() => window.__txFrames.slice(-1)[0][5]) === 100, '수업 화면: 조향 57 → 100 으로 보냄');
+  await p.evaluate(() => window.__altinoKit.drive(0, -100)); await p.waitForTimeout(350);
+  ok(await p.evaluate(() => window.__txFrames.slice(-1)[0][5]) === (127 | 0x80), '수업 화면: 조향 -100 → 왼쪽 127');
+  await p.evaluate(() => window.__altinoKit.drive(0, 0));
+  await p.goto(base + '/check.html'); await p.waitForTimeout(400);
+  await p.evaluate(() => window.__altinoKit.drive(0, 57)); await p.waitForTimeout(350);
+  ok(await p.evaluate(() => window.__txFrames.slice(-1)[0][5]) === 57, '점검 화면: 조향 57 그대로');
   await ctx.close(); }
 await br.close(); server.close(); console.log(fail ? '실패 ' + fail : '모두 통과'); process.exit(fail ? 1 : 0);

@@ -3,7 +3,7 @@
 (function () {
   const $ = (id) => document.getElementById(id);
   const P = window.AltinoProtocol;
-  const kit = AltinoKit.create({ appId: 'c09', title: '점검', kick: false, onStatus: info });
+  const kit = AltinoKit.create({ appId: 'c09', title: '점검', kick: false, rawSteer: true, onStatus: info });   // rawSteer: 슬라이더 값을 그대로 보낸다
   const KEYS = ['ir1', 'ir2', 'ir3', 'ir4', 'ir5', 'ir6', 'cds', 'battery'];
   const min = {}, max = {};
 
