@@ -13,15 +13,16 @@
     $('rName').textContent = st.name || '–'; $('rAddr').textContent = st.address || '–';
     paintModel();
   }
-  function paintModel() { const lite = P.getModel() === 'lite'; $('mLite').classList.toggle('on', lite); $('mNeo').classList.toggle('on', !lite); }
+  function paintModel() { const m = P.getModel(); $('mLite').classList.toggle('on', m === 'lite'); $('mNeo').classList.toggle('on', m === 'neo'); $('mClassic').classList.toggle('on', m === 'classic'); }
   // 고른 기종은 이 로봇 주소에 적어 둔다 → 다른 화면에서도 그 기종으로 보낸다(transport._syncModel)
   function pickModel(m) {
     P.setModel(m); paintModel();
     try { const a = kit.robotInfo().address; if (a) localStorage.setItem('altino.model.' + a, m); } catch (e) {}
-    kit.toast(m === 'lite' ? '라이트 프레임(22바이트)으로 보내요' : '네오 프레임(26바이트)으로 보내요');
+    kit.toast(P.modelLabel(m) + ' 프레임으로 보내요');
   }
   $('mNeo').onclick = () => pickModel('neo');
   $('mLite').onclick = () => pickModel('lite');
+  $('mClassic').onclick = () => pickModel('classic');
 
   $('sens').innerHTML = KEYS.map(k => `<tr><td>${k}</td><td><b class="sv" id="s-${k}">–</b> <span class="lead">(최소 <span id="lo-${k}">–</span> · 최대 <span id="hi-${k}">–</span>)</span></td></tr>`).join('');
   let last = { rx: 0, bytes: 0, tx: 0 };
@@ -81,20 +82,17 @@
 
   // ── 프레임 실험 ──
   // 연결·쓰기는 되는데 로봇이 답하지 않을 때(2026-11-17 실기: 쓰기 성공 1078, 받은 묶음 0) 어느 조합이 맞는지 실물로 가른다.
-  // 조합마다 2.5초 동안 소리(솔)·불빛·도트를 켠 프레임을, 이어서 1.5초 동안 끈 프레임을 보낸다. 바퀴는 돌리지 않는다.
+  // 조합: 구형·라이트·네오 프레임 × 쓰기 방식. 조합마다 2.5초 동안 소리(솔)·불빛·도트를 켠 프레임을, 이어서 1.5초 동안 끈 프레임을 보낸다. 바퀴는 돌리지 않는다.
   const EXP = [];
-  for (const [kind, name] of [['l1', '라이트 [4]=01'], ['l3', '라이트 [4]=03'], ['l13', '라이트 01·03 번갈아'], ['neo', '네오 26B']])
-    for (const split of (kind === 'neo' ? [false] : [false, true]))
+  for (const [kind, name] of [['classic', '구형 28B'], ['lite', '라이트 22B'], ['neo', '네오 26B']])
+    for (const split of (kind === 'lite' ? [false, true] : [false]))
       for (const resp of [false, true])
-        EXP.push({ kind, split, resp, label: name + (kind === 'neo' ? '' : (split ? ' · 14+8 나눠' : ' · 한 번에')) + (resp ? ' · 응답 있는 쓰기' : ' · 응답 없는 쓰기') });
-  const exp = { i: -1, timer: null, rx: [], hits: [], n: 0 };
+        EXP.push({ kind, split, resp, label: name + (kind === 'lite' ? (split ? ' · 14+8 나눠' : ' · 한 번에') : '') + (resp ? ' · 응답 있는 쓰기' : ' · 응답 없는 쓰기') });
+  const exp = { i: -1, timer: null, rx: [], hits: [] };
   function expFrame(v, on) {
     const st = new P.AltinoState();
-    if (on) { st.soundSet(44); st.ledSet(v.kind === 'neo' ? 0xFFFF : 0xFF); st.displayMode = 0xFF; st.dot.set([0x3C, 0x42, 0xA5, 0x81, 0xA5, 0x99, 0x42, 0x3C]); }
-    if (v.kind === 'neo') return P.buildFrame(st, 'neo');
-    if (v.kind === 'l1') return P.buildLiteFrame(st);
-    if (v.kind === 'l3') return P.buildLiteRequest(st);
-    return (exp.n++ % 2) ? P.buildLiteRequest(st) : P.buildLiteFrame(st);
+    if (on) { st.soundSet(44); st.ledSet(v.kind === 'lite' ? 0x0F : 0xFF); st.displayMode = 0xFF; st.dot.set([0x3C, 0x42, 0xA5, 0x81, 0xA5, 0x99, 0x42, 0x3C]); }
+    return P.buildFrame(st, v.kind);
   }
   function expStop(msg) {
     clearTimeout(exp.timer); exp.timer = null; exp.i = -1; kit.rawFrames(null);

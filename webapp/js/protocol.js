@@ -70,16 +70,64 @@ function encodeMotor(v) {
   return [(raw >> 8) & 0xFF, raw & 0xFF];
 }
 
-// ── 기종: 알티노 네오(기본) / 알티노 라이트 ───────────────────────────────
-// 라이트는 같은 BLE(ISSC UART)지만 프레임이 다르다 — 오케스트라2 libapp.so(altinoLite.dart) 역컴파일로 확인(2026-10-08).
-//   보냄 22바이트: 02 10 chk 01 01 | 조향 | 모터A hi lo | 모터B hi lo | 표시 | 도트×8 | 소리 | LED(1바이트) | 03
-//   받음 22바이트: 02 .. .. 01 01 | IR1~6(각 2) | CDS(2) | BAT(2) | 03  — 로봇은 프레임을 받을 때마다 하나 답한다
-// 연결된 로봇 이름으로 정한다: ALTINO-L… = 라이트, 그 밖 = 네오. transport 가 연결 때 setModelFromName 을 부른다.
+// ── 기종 세 가지 (docs/ALTINO_LITE_ORCHESTRA2.md — 오케스트라2 PC판 코드 기준) ─────────────
+//   neo     올뉴 알티노  이름 ALTINO-N…  보냄 26 / 받음 54
+//   lite    알티노 라이트 이름 ALTINO-L…  보냄 22 / 받음 22
+//   classic 구형 알티노  그 밖의 ALTINO…(ALTINO-B7CE 등)·RN4678·RNBT  보냄 28 / 받음 56
+// 새온(오케스트라2)과 같은 순서로 이름을 본다. 이름으로 고른 기종이 답이 없으면 kit 이 나머지를 차례로 시도한다.
 let MODEL = 'neo';
-function modelFromName(name) { return /^ALTINO-L/i.test(String(name || '').trim()) ? 'lite' : 'neo'; }
-function setModel(m) { MODEL = (m === 'lite') ? 'lite' : 'neo'; }
+const MODELS = ['neo', 'lite', 'classic'];
+function modelFromName(name) {
+  const up = String(name || '').toUpperCase();
+  if (up.includes('ALTINO-L')) return 'lite';
+  if (up.includes('ALTINO-N')) return 'neo';
+  if (up.includes('ALTINO') || up.includes('RN4678') || up.includes('RNBT')) return 'classic';
+  return 'neo';
+}
+function setModel(m) { MODEL = MODELS.includes(m) ? m : 'neo'; }
 function setModelFromName(name) { setModel(modelFromName(name)); }
 function getModel() { return MODEL; }
+const MODEL_LABEL = { neo: '올뉴 알티노(네오)', lite: '알티노 라이트', classic: '구형 알티노' };
+function modelLabel(m) { return MODEL_LABEL[m || MODEL] || m; }
+
+// 조향(라이트·올뉴): 오른쪽 = 값 그대로, 왼쪽 = ~|값| (1의 보수 — 2의 보수가 아니다)
+function encodeSteer(v) { v = clamp(v | 0, -127, 127); return v < 0 ? (~(-v)) & 0xFF : v; }
+
+// 구형 알티노 28바이트. 음수는 부호 비트(조향 |v| | 0x80, 구동은 hi 바이트에만 0x80).
+// 체크섬 [2] = [1]~[27] 중 [2] 를 뺀 합(ETX 포함, STX 제외). [4]=0x0A · [21] 아래 4비트 0xA · [24]=1 은 뜻을 모르는 고정값.
+function buildClassicFrame(st) {
+  const b = new Uint8Array(28);
+  b[0] = 0x02; b[1] = 0x1C; b[3] = 0x00; b[4] = 0x0A;
+  const s = clamp(st.steering | 0, -127, 127);
+  b[5] = s < 0 ? ((-s) | 0x80) : s;
+  const mot = (v, i) => { v = clamp(v | 0, -1000, 1000); const a = Math.abs(v); b[i] = ((a >> 8) & 0x7F) | (v < 0 ? 0x80 : 0); b[i + 1] = a & 0xFF; };
+  mot(st.motorA, 7); mot(st.motorB, 10);
+  b[12] = 0x00;                                             // 0 = 점 그림
+  if (st.displayMode === 0xFF) for (let i = 0; i < 8; i++) b[13 + i] = st.dot[i] & 0xFF;
+  b[21] = 0x0A | ((st.led >> 8) & 0xF0);                    // 위 4비트 = 불빛(브레이크등 0xC0)
+  b[22] = st.sound & 0xFF;
+  b[23] = st.led & 0xFF;                                    // 전조등 1|2 · 후진등 4|8 · 깜빡이 오른 0x10|0x40 왼 0x20|0x80
+  b[24] = 0x01; b[27] = 0x03;
+  let sum = 0;
+  for (let i = 1; i <= 27; i++) if (i !== 2) sum += b[i];
+  b[2] = sum & 0xFF;
+  return b;
+}
+
+// 구형 받는 56바이트. 체크섬은 STX 포함·제외 두 방식 모두 받아 주고, 둘 다 아니어도 끝이 0x03 이면 받는다(실물 미확인).
+function parseClassicFrame(f) {
+  if (!f || f.length < 56 || f[0] !== 0x02) return null;
+  let sum = 0; for (let i = 1; i < 56; i++) if (i !== 2) sum += f[i];
+  if (((sum + 2) & 0xFF) !== f[2] && (sum & 0xFF) !== f[2] && f[55] !== 0x03) return null;
+  const u16 = (i) => ((f[i] & 0xFF) << 8) | (f[i + 1] & 0xFF);
+  return { ir1: u16(7), ir2: u16(9), ir3: u16(11), ir4: u16(13), ir5: u16(15), ir6: u16(17), cds: u16(43), battery: u16(47) };
+}
+
+// 배터리 원값 → % (대략). 라이트·올뉴: 원값 × 1.17. 구형: 전압 = 0.0027 × 값 + 5.8958, 7.0V 0% ~ 8.3V 100%.
+function batteryPct(raw, model) {
+  if ((model || MODEL) === 'classic') { const v = 0.0027 * raw + 5.8958; return Math.round(clamp((v - 7.0) / 1.3, 0, 1) * 100); }
+  return Math.min(100, Math.round(raw * 1.17));
+}
 
 // 라이트 22바이트 프레임. checksum = sum(bytes[3..20]) & 0xFF (네오와 같은 방식, 범위만 다름)
 function buildLiteFrame(st) {
@@ -87,8 +135,8 @@ function buildLiteFrame(st) {
   b[0] = 0x02;
   b[1] = 0x10;            // CMD (라이트)
   b[3] = 0x01;
-  b[4] = 0x01;            // 1 = 조종 프레임 (3 = 센서 요청, 오케스트라는 따로 보내지만 조종 프레임에도 답이 온다)
-  b[5] = st.steering & 0xFF;
+  b[4] = 0x01;            // [3][4] = 명령 번호 0x0101(출력 설정). 답으로 센서 프레임이 온다. 센서 요청 명령은 따로 없다
+  b[5] = encodeSteer(st.steering);
   const [a6, a7] = encodeMotor(st.motorA);
   b[6] = a6; b[7] = a7;
   const [b8, b9] = encodeMotor(st.motorB);
@@ -108,28 +156,17 @@ function buildLiteFrame(st) {
   return b;
 }
 
-// 라이트 센서 요청 프레임: 조종 프레임과 같은 내용에 [4] 만 0x03. 오케스트라는 센서 값을 이 요청으로 따로 받아 온다.
-// ⚠ 조종 프레임([4]=0x01)에도 답이 오는지는 실물로 확인되지 않았다 — 2026-11-17 실기에서 조종 프레임만 보냈을 때 받은 바이트가 0 이었다.
-//   그래서 kit 이 라이트일 때 이 요청을 조종 프레임 사이에 끼워 보낸다. 지금 상태(모터·조향·도트)를 그대로 실어, 로봇이 내용을 적용하더라도 움직임이 바뀌지 않게 한다.
-function buildLiteRequest(st) {
-  const b = buildLiteFrame(st);
-  b[4] = 0x03;
-  let sum = 0;
-  for (let i = 3; i <= 20; i++) sum += b[i];
-  b[2] = sum & 0xFF;
-  return b;
-}
-
 // 상태 -> 프레임 (Uint8Array). 네오: 26바이트(ConnectedThread.Sendbyte() 재현), 라이트: 22바이트.
 function buildFrame(st, model) {
   if ((model || MODEL) === 'lite') return buildLiteFrame(st);
+  if ((model || MODEL) === 'classic') return buildClassicFrame(st);
   const b = new Uint8Array(26);
   b[0] = 0x02;            // STX
   b[1] = 0x14;            // CMD (20)
   // b[2] = checksum (아래에서 계산)
   b[3] = 0x01;
   b[4] = 0x01;
-  b[5] = st.steering & 0xFF;               // signed int8 -> 바이트
+  b[5] = encodeSteer(st.steering);         // 왼쪽은 1의 보수
   const [a6, a7] = encodeMotor(st.motorA);
   b[6] = a6; b[7] = a7;
   const [b8, b9] = encodeMotor(st.motorB);
@@ -183,13 +220,12 @@ class SensorFrameAssembler {
   push(bytes) {
     const out = [];
     for (const byte of bytes) {
-      const lite = MODEL === 'lite';
-      const n = lite ? 22 : 54;
+      const n = MODEL === 'lite' ? 22 : MODEL === 'classic' ? 56 : 54;
       this.buf.push(byte & 0xFF);
       while (this.buf.length > n) this.buf.shift();
       if (this.buf.length === n) {
         const frame = Uint8Array.from(this.buf);
-        const s = lite ? parseLiteFrame(frame) : parseSensorFrame(frame);
+        const s = MODEL === 'lite' ? parseLiteFrame(frame) : MODEL === 'classic' ? parseClassicFrame(frame) : parseSensorFrame(frame);
         if (s) { out.push(s); this.buf = []; }
       }
     }
@@ -198,8 +234,8 @@ class SensorFrameAssembler {
 }
 
 const AltinoProtocol = {
-  AltinoState, buildFrame, buildLiteFrame, buildLiteRequest, parseSensorFrame, parseLiteFrame, encodeMotor,
-  modelFromName, setModel, setModelFromName, getModel,
+  AltinoState, buildFrame, buildLiteFrame, buildClassicFrame, parseSensorFrame, parseLiteFrame, parseClassicFrame, encodeMotor, encodeSteer,
+  MODELS, modelFromName, setModel, setModelFromName, getModel, modelLabel, batteryPct,
   SensorFrameAssembler,
   toHex: (u8) => Array.from(u8).map(x => x.toString(16).padStart(2, '0')).join(' '),
 };

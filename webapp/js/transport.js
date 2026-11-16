@@ -172,7 +172,7 @@ class AndroidBridgeTransport extends BaseTransport {
     try {
       const P = window.AltinoProtocol, st = this.state(); if (!P) return;
       let saved = null; try { saved = localStorage.getItem('altino.model.' + (st.address || '')); } catch (e) {}
-      if (saved === 'lite' || saved === 'neo') P.setModel(saved); else P.setModelFromName(st.name);
+      if (saved === 'lite' || saved === 'neo' || saved === 'classic') P.setModel(saved); else P.setModelFromName(st.name);
     } catch (e) {}
   }
   // 이미 연결된 네이티브 링크를 '입양'(재연결 없이 콜백만 재바인딩)

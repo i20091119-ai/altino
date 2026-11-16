@@ -33,20 +33,20 @@
 <div class="stage">
   <section class="card scroll">
     <h2>🧪 프레임 실험 <button id="expGo" class="btn sm" style="margin-left:auto">시작</button></h2>
-    <div class="row"><b class="sv" id="expNo" style="font-size:1.6rem;min-width:2.2em">–</b><span class="lead" id="expLbl">로봇을 연결하고 시작을 누르세요. 약 1분. 소리·불빛·도트가 나오면 아래 단추를 누르세요.</span></div>
+    <div class="row"><b class="sv" id="expNo" style="font-size:1.6rem;min-width:2.2em">–</b><span class="lead" id="expLbl">로봇을 연결하고 시작을 누르세요. 약 30초. 소리·불빛·도트가 나오면 아래 단추를 누르세요.</span></div>
     <div class="row"><button id="expHit" class="btn sun sm">지금 로봇이 반응했다</button><span class="lead">반응한 번호 <b id="expHits">–</b></span></div>
     <h2>🔗 연결 · 받는 값</h2>
     <table class="kv">
       <tr><td>로봇 이름</td><td id="rName">–</td></tr>
       <tr><td>주소</td><td id="rAddr">–</td></tr>
-      <tr><td>기종(프레임)</td><td><span class="seg"><button id="mNeo">네오 26B</button><button id="mLite">라이트 22B</button></span></td></tr>
+      <tr><td>기종(프레임)</td><td><span class="seg"><button id="mClassic">구형 28B</button><button id="mNeo">네오 26B</button><button id="mLite">라이트 22B</button></span></td></tr>
       <tr><td>받는 속도</td><td><b id="rxHz">0</b> 프레임/초 · <b id="rxBps">0</b> 바이트/초</td></tr>
       <tr><td>보내는 속도</td><td><b id="txHz">0</b> 프레임/초</td></tr>
     </table>
     <table class="kv" id="sens"></table>
     <div class="lead">마지막으로 받은 바이트</div><div class="mono" id="rxHex">–</div>
     <div class="lead">마지막으로 보낸 프레임</div><div class="mono" id="txHex">–</div>
-    <p class="lead">받는 속도가 0이면 기종 단추를 바꿔 보세요. 이름이 ALTINO-L… 이면 라이트로 자동 선택돼요.</p>
+    <p class="lead">받는 속도가 0이면 기종 단추를 바꿔 보세요. 이름 ALTINO-L… 라이트, ALTINO-N… 네오, 그 밖의 ALTINO-… 는 구형.</p>
   </section>
 
   <section class="card">
