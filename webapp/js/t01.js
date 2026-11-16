@@ -1,5 +1,5 @@
 // t01 로봇학교 입학식 (1–2차시) — 기획서 docs/topics/t01.md
-// ① 알티노 깨우기(전원·연결·눈 뜨기) → ② 이름 지어 주기(후보·까닭·합의 → kit.team.set)
+// ① 알티노 깨우기(전원·연결·눈 뜨기) → ② 이름 지어 주기(후보 → 고르기 → kit.team.set)
 // → ③ 첫 주행과 관찰(패드 + '할 수 있는 것/아직 못 하는 것' 찾기) → 입학 약속 → 성장기록부 첫 줄
 'use strict';
 (function () {
@@ -23,14 +23,14 @@
   // 관찰 카드 — 지금 할 수 있는 것 1개 + 아직 못 하는 것 5개 = 앞으로의 시간표
   const SKILLS = [
     { id: 'move',   m: '🚗', name: '앞뒤로 움직이기', can: true },
-    { id: 'stop',   m: '🎯', name: '정지선에 딱 멈추기', lessons: '3–4차시' },
-    { id: 'face',   m: '🙂', name: '표정 짓기',        lessons: '5–6차시' },
-    { id: 'song',   m: '🎵', name: '노래하기',         lessons: '7–8차시' },
-    { id: 'signal', m: '💡', name: '신호 보내기',      lessons: '9–10차시' },
-    { id: 'hand',   m: '✋', name: '손 따라오기',      lessons: '11–12차시' },
+    { id: 'stop',   m: '🎯', name: '정지선에 딱 멈추기', lessons: '걸음마 수업' },
+    { id: 'face',   m: '🙂', name: '표정 짓기',        lessons: '표정 만들기 수업' },
+    { id: 'song',   m: '🎵', name: '노래하기',         lessons: '노래 가르치기 수업' },
+    { id: 'signal', m: '💡', name: '신호 보내기',      lessons: '비밀 신호 수업' },
+    { id: 'hand',   m: '✋', name: '손 따라오기',      lessons: '손길 알아채기 수업' },
   ];
   const LOCKED = SKILLS.filter(s => !s.can);
-  const PLEDGES = ['알티노를 떨어뜨리지 않아요.', '실패해도 화내지 않고 다시 가르쳐요.', '조종은 돌아가며 해요.'];
+  const PLEDGES = ['알티노를 떨어뜨리지 않아요.', '실패해도 화내지 않고 다시 가르쳐요.', '조종은 아이가 해요.'];
 
   // ── 저장값 ───────────────────────────────────────────────────────
   let power = !!kit.store.get('power', false);
@@ -136,7 +136,7 @@
     $('nameplate').classList.toggle('set', !!now);
     $('nameSet').disabled = !pick || pick === now;
     $('nameSet').textContent = now ? '이 이름으로 바꾸기' : '이 이름으로 정하기';
-    $('nameMsg').textContent = now ? `반가워, ${now}! 이제 모든 화면 위에 이름이 보여요.` : (pick ? `‘${pick}’ — 모두 좋아요 하면 눌러요.` : '후보를 하나 고르고 정해요.');
+    $('nameMsg').textContent = now ? `반가워, ${now}! 이제 모든 화면 위에 이름이 보여요.` : (pick ? `‘${pick}’ — 마음에 들면 눌러요.` : '후보를 하나 고르고 정해요.');
   }
 
   // ── ③ 첫 주행과 관찰 ─────────────────────────────────────────────
@@ -180,14 +180,14 @@
     const ready = n === LOCKED.length && canMove();
     $('pledgeOpen').disabled = enrolled || !ready || !team;
     $('pledgeOpen').textContent = enrolled ? '✔ 입학했어요' : '🎒 입학 약속하기';
-    $('foundMsg').textContent = enrolled ? '📒 성장기록부 첫 줄이 생겼어요! 다음 시간: 걸음마 가르치기'
+    $('foundMsg').textContent = enrolled ? '📒 성장기록부 첫 줄이 생겼어요! 다음: 걸음마 가르치기'
       : !ready ? `아직 못 하는 것 ${n} / ${LOCKED.length}${canMove() ? '' : ' · ▲·▼로 움직여 보기'}`
       : !team ? '② 이름 지어 주기를 먼저 해요'
       : '다 찾았어요! 이제 우리가 가르쳐 줄 차례예요.';
   }
 
   $('obsReset').onclick = async () => {
-    if (!await kit.confirm({ title: '처음부터 할까요?', lines: ['깨우기·후보·관찰 기록이 지워져요', '모둠 이름과 성장기록부는 그대로예요'], okText: '네, 처음부터', danger: true })) return;
+    if (!await kit.confirm({ title: '처음부터 할까요?', lines: ['깨우기·후보·관찰 기록이 지워져요', '알티노 이름과 성장기록부는 그대로예요'], okText: '네, 처음부터', danger: true })) return;
     ['power', 'woke', 'cands', 'moved', 'found', 'enrolled'].forEach(k => kit.store.remove(k));
     power = false; woke = false; cands = []; pick = null; moved = {}; found = []; enrolled = false;
     showFace(FACE.sleep); renderWake(); renderName(); renderObs();
@@ -217,6 +217,7 @@
     showFace(FACE.smile); kit.signal('success');
     kit.toast(`🎉 ${kit.josa(team, '이가')} 로봇학교에 입학했어요!`, 2600);
     renderObs();
+    setTimeout(() => { location.href = 'index.html'; }, 2800);   // 캠프: 입학을 마치면 캠프 홈으로 돌아간다
   };
 
   // ── 시작 ─────────────────────────────────────────────────────────

@@ -108,6 +108,18 @@ function buildLiteFrame(st) {
   return b;
 }
 
+// 라이트 센서 요청 프레임: 조종 프레임과 같은 내용에 [4] 만 0x03. 오케스트라는 센서 값을 이 요청으로 따로 받아 온다.
+// ⚠ 조종 프레임([4]=0x01)에도 답이 오는지는 실물로 확인되지 않았다 — 2026-11-17 실기에서 조종 프레임만 보냈을 때 받은 바이트가 0 이었다.
+//   그래서 kit 이 라이트일 때 이 요청을 조종 프레임 사이에 끼워 보낸다. 지금 상태(모터·조향·도트)를 그대로 실어, 로봇이 내용을 적용하더라도 움직임이 바뀌지 않게 한다.
+function buildLiteRequest(st) {
+  const b = buildLiteFrame(st);
+  b[4] = 0x03;
+  let sum = 0;
+  for (let i = 3; i <= 20; i++) sum += b[i];
+  b[2] = sum & 0xFF;
+  return b;
+}
+
 // 상태 -> 프레임 (Uint8Array). 네오: 26바이트(ConnectedThread.Sendbyte() 재현), 라이트: 22바이트.
 function buildFrame(st, model) {
   if ((model || MODEL) === 'lite') return buildLiteFrame(st);
@@ -186,7 +198,7 @@ class SensorFrameAssembler {
 }
 
 const AltinoProtocol = {
-  AltinoState, buildFrame, buildLiteFrame, parseSensorFrame, parseLiteFrame, encodeMotor,
+  AltinoState, buildFrame, buildLiteFrame, buildLiteRequest, parseSensorFrame, parseLiteFrame, encodeMotor,
   modelFromName, setModel, setModelFromName, getModel,
   SensorFrameAssembler,
   toHex: (u8) => Array.from(u8).map(x => x.toString(16).padStart(2, '0')).join(' '),

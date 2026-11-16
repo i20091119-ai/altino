@@ -121,7 +121,7 @@
       num(key, def, lo, hi) { const x = Number(store.get(key, def)); return Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : def; },
     };
 
-    // ── 모둠 이름 (t01 입학식에서 지음 · 모든 앱이 읽음) ──────────────────
+    // ── 알티노 이름 (t01 입학식이나 캠프 홈에서 지음 · 모든 앱이 읽음. 캠프에는 모둠이 없다 — 아이+보호자) ──────────────────
     const team = {
       get() { const v = raw.get('altino.team.name'); return v ? String(v).slice(0, 12) : ''; },
       set(name) { const n = String(name || '').trim().slice(0, 12); if (n) raw.set('altino.team.name', n); else raw.del('altino.team.name'); renderBar(); },
@@ -177,7 +177,7 @@
       clearTimeout(t._h); t._h = setTimeout(() => { t.style.opacity = '0'; }, ms || 1800);
     }
 
-    // 상단 공통 칩: 모둠 이름 · 내 로봇 번호 · 배터리 · 연결 상태(누르면 연결창)
+    // 상단 공통 칩: 알티노 이름 · 내 로봇 번호 · 배터리 · 연결 상태(누르면 연결창)
     function renderBar() {
       const bar = $('kitBar'); if (!bar) return;
       if (!bar.dataset.ready) {
@@ -226,6 +226,7 @@
     // ── 전송 루프 (S2·S4·S6·S8) ───────────────────────────────────────
     function tick() {
       if (typeof o.onTick === 'function') { try { o.onTick(api); } catch (e) { console.error(e); } }
+      probeModel();
       let m = motion.m, st = motion.steer;
       if (isBlocked()) { motion.m = 0; motion.steer = 0; m = 0; st = 0; }
       // S6 — 자율 동작 중에만: 센서가 끊겼는데 움직이면 멈춘다
@@ -242,7 +243,33 @@
     }
     // 점검 화면용 기록(캠프 앱에서 보탬): 마지막으로 보낸·받은 바이트와 개수
     const debug = { tx: null, txCount: 0, rx: null, rxBytes: 0, rxFrames: 0 };
-    function send() { if (transport && transport.connected) { try { const fr = P.buildFrame(state); debug.tx = fr; debug.txCount++; transport.send(fr); } catch (e) {} } }
+    // ── 기종 찾기 (캠프 앱에서 보탬) ─────────────────────────────────────
+    // 이름으로 고른 기종(네오/라이트)의 프레임에 로봇이 답하지 않으면 다른 기종으로 바꿔 본다.
+    // 라이트는 맞는 프레임을 받아야만 답하고, 네오는 26바이트가 아니면 움직이지 않는다 — 이름만 믿으면 '연결됐는데 안 움직임'이 된다.
+    // 답이 온 기종은 로봇 주소별로 적어 둔다(다음부터 바로 그 기종).
+    const PROBE_MS = 2500;
+    const probe = { at: 0, base: 0, stage: 0 };   // stage 0 처음 기종 · 1 바꿔 봄 · 2 끝
+    function probeStart() { probe.at = Date.now(); probe.base = debug.rxFrames; probe.stage = 0; }
+    function probeModel() {
+      if (probe.stage >= 2 || !probe.at || !transport || !transport.connected || !T.AndroidBridgeTransport.supported) return;
+      const addr = () => { try { return transport.state().address || ''; } catch (e) { return ''; } };
+      if (debug.rxFrames > probe.base) {            // 답이 왔다 → 이 기종이 맞다
+        if (probe.stage === 1) { try { localStorage.setItem('altino.model.' + addr(), P.getModel()); } catch (e) {} toast('🔧 ' + (P.getModel() === 'lite' ? '알티노 라이트' : '알티노 네오') + '로 맞췄어요'); }
+        probe.stage = 2; return;
+      }
+      if (Date.now() - probe.at < PROBE_MS) return;
+      P.setModel(P.getModel() === 'lite' ? 'neo' : 'lite'); assembler.buf = [];
+      probe.at = Date.now(); probe.stage++;         // 두 기종 다 답이 없으면 처음 기종으로 돌아와 멈춘다
+    }
+    let sendN = 0;
+    function send() {
+      if (!transport || !transport.connected) return;
+      try {
+        const fr = P.buildFrame(state); debug.tx = fr; debug.txCount++; transport.send(fr);
+        // 라이트: 두 번에 한 번 센서 요청을 끼워 보낸다(protocol.js buildLiteRequest 참고)
+        if (P.getModel() === 'lite' && (++sendN % 2) === 0) transport.send(P.buildLiteRequest(state));
+      } catch (e) {}
+    }
     setInterval(tick, STREAM_MS);
 
     // ── S1·S7: 즉시 정지 ──────────────────────────────────────────────
@@ -371,7 +398,7 @@
         const base = String(s).split(':')[0];
         noteReconnect(base);
         renderBar();
-        if (base === 'connected') { setStatus('🔗 연결됨 ✓', 'ok'); toast('로봇 연결됨'); }
+        if (base === 'connected') { setStatus('🔗 연결됨 ✓', 'ok'); toast('로봇 연결됨'); probeStart(); }
         else if (base === 'connecting') setStatus('🔗 연결 중…', 'pending');
         else if (base === 'reconnecting') setStatus('🔗 재연결 중…', 'pending');
         else if (base === 'disconnected') setStatus('🔗 연결 끊김', 'err');

@@ -1,6 +1,6 @@
 // t05 비밀 신호 보내기 (9–10차시) — 기획서 docs/topics/t05.md
-// ① 자동차 불빛의 뜻(등 버튼 · 경적 · SOS) → ② 모둠 신호 만들기(빛·경적 × 짧게·길게, 신호표)
-// → ③ 말 없이 전하기 시험(받는 모둠이 신호표로 해독, 기록원 ⭕/❌) → ④ 더 해 보기(신호 몇 가지? · 선생님용 LED 점검)
+// ① 자동차 불빛의 뜻(등 버튼 · 경적 · SOS) → ② 우리 신호 만들기(빛·경적 × 짧게·길게, 신호표)
+// → ③ 말 없이 전하기 시험(보호자가 신호표로 해독, 아이가 ⭕/❌) → ④ 더 해 보기(신호 몇 가지? · 선생님용 LED 점검)
 // ⚠ LED 는 '15 = 전조등(네오)'만 실측됐다(03 §6). 라이트는 1바이트, 비트 뜻 실측 전 → LAMPS 의 mask:null 은 화면 그림으로만.
 //   실측하면 LAMPS 의 mask 만 채우면 된다(④ LED 점검 칸으로 잴 수 있다).
 'use strict';
@@ -88,7 +88,7 @@
   };
   $('stop1').onclick = () => { stopAll(); renderAll(); };   // kit.stop 은 onRunEnd 를 부르지 않는다
 
-  // ── ② 모둠 신호 만들기 ──────────────────────────────────────────
+  // ── ② 우리 신호 만들기 ──────────────────────────────────────────
   MEANS.forEach(m => {
     const b = document.createElement('button'); b.textContent = m; b.dataset.m = m;
     b.onclick = () => { mean = m; renderAll(); };
@@ -141,7 +141,7 @@
     });
     $('warn2').textContent = d.length ? '⚠ 같은 신호가 있어요: ' + d.map(([a, b]) => `${a} = ${b}`).join(', ') + ' — 받는 사람이 구별할 수 없어요' : '';
     const n = MEANS.filter(m => sigs[m].length).length;
-    $('msg2').textContent = sigReady() ? '신호표 완성! ③에서 다른 모둠에게 전해 봐요.' : `신호를 만든 뜻 ${n} / ${MEANS.length}`;
+    $('msg2').textContent = sigReady() ? '신호표 완성! ③에서 보호자에게 전해 봐요.' : `신호를 만든 뜻 ${n} / ${MEANS.length}`;
   }
 
   // ── ③ 말 없이 전하기 시험 ───────────────────────────────────────
@@ -181,7 +181,7 @@
       const best = kit.store.num('bestStars', 0, 0, 3);
       if (s > best) {                                   // 기록부에는 가장 좋은 결과 한 줄만 (05 §7)
         kit.store.set('bestStars', s);
-        kit.record.add({ title: '말 없이 신호를 전했어요', detail: `받는 모둠이 맞힌 신호 ${wins()} / ${TESTN}`, stars: s });
+        kit.record.add({ title: '말 없이 신호를 전했어요', detail: `보호자가 맞힌 신호 ${wins()} / ${TESTN}`, stars: s });
       }
     }
   }
@@ -202,9 +202,9 @@
     $('resultBox').classList.toggle('hidden', phase !== 'done');
     $('retry').classList.toggle('hidden', phase !== 'done');
     $('testMsg').textContent = !sigReady() ? '② 신호표를 먼저 완성해요(네 뜻 모두, 서로 다르게).'
-      : phase === 'done' ? `받는 모둠이 ${wins()}개를 맞혔어요.`
-      : phase === 'judge' ? '받는 모둠이 뜻을 말해요. 다시 보고 싶으면 한 번 더 보내도 돼요.'
-      : `${res.length + 1}번째 신호! 전달자가 눌러요.`;
+      : phase === 'done' ? `보호자가 ${wins()}개를 맞혔어요.`
+      : phase === 'judge' ? '보호자가 뜻을 말해요. 다시 보고 싶으면 한 번 더 보내도 돼요.'
+      : `${res.length + 1}번째 신호! 아이가 눌러요.`;
     if (phase === 'judge' && sigReady()) $('send').disabled = false;          // 판정 전에 한 번 더 보내기 허용
     if (phase === 'done') {
       const s = starsOf(wins());

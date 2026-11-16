@@ -14,8 +14,14 @@
     paintModel();
   }
   function paintModel() { const lite = P.getModel() === 'lite'; $('mLite').classList.toggle('on', lite); $('mNeo').classList.toggle('on', !lite); }
-  $('mNeo').onclick = () => { P.setModel('neo'); paintModel(); kit.toast('네오 프레임(26바이트)으로 보내요'); };
-  $('mLite').onclick = () => { P.setModel('lite'); paintModel(); kit.toast('라이트 프레임(22바이트)으로 보내요'); };
+  // 고른 기종은 이 로봇 주소에 적어 둔다 → 다른 화면에서도 그 기종으로 보낸다(transport._syncModel)
+  function pickModel(m) {
+    P.setModel(m); paintModel();
+    try { const a = kit.robotInfo().address; if (a) localStorage.setItem('altino.model.' + a, m); } catch (e) {}
+    kit.toast(m === 'lite' ? '라이트 프레임(22바이트)으로 보내요' : '네오 프레임(26바이트)으로 보내요');
+  }
+  $('mNeo').onclick = () => pickModel('neo');
+  $('mLite').onclick = () => pickModel('lite');
 
   $('sens').innerHTML = KEYS.map(k => `<tr><td>${k}</td><td><b class="sv" id="s-${k}">–</b> <span class="lead">(최소 <span id="lo-${k}">–</span> · 최대 <span id="hi-${k}">–</span>)</span></td></tr>`).join('');
   let last = { rx: 0, bytes: 0, tx: 0 };
@@ -85,6 +91,13 @@
       `불빛 신호 값 ${s.ledMask} · 앞 센서 자리 왼 ${s.irLeft} 가운데 ${s.irCenter} 오른 ${s.irRight}`,
       'RX ' + (d.rx ? P.toHex(d.rx) : '-'), 'TX ' + (d.tx ? P.toHex(d.tx) : '-'),
     ];
+    // 블루투스 층 진단(앱 1.0.3 두 번째 빌드부터): 고른 특성 · 쓰기 성공 여부 · 받은 묶음 · 서비스 표
+    try {
+      const g = JSON.parse(window.AltinoNative.getDiag() || '{}');
+      lines.push(`BLE MTU ${g.mtu} · 쓰기 ${String(g.write).slice(0, 8)} · 알림 ${String(g.notify).slice(0, 8)} · CCCD ${g.cccd} · 연결 ${g.links}번 · 끊김 ${g.lastDisc}`,
+        `쓰기 성공 ${g.wOk} 실패 ${g.wFail}(코드 ${g.lastWStatus}) 거부 ${g.wReject} · 받은 묶음 ${g.rxPkts} (${g.rxBytes}바이트)`,
+        'GATT ' + g.gatt);
+    } catch (e) {}
     if (document.activeElement !== $('report')) $('report').value = lines.join('\n');
   }
   $('copy').onclick = async () => {

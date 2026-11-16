@@ -89,7 +89,7 @@
 <div class="topbar">
   <div class="row">
     <a href="index.html">← 캠프 홈</a>
-    <h1 style="margin:0;font-size:1.25rem">🐣 알티노 걸음마 가르치기 <span class="lead" style="display:inline">3–4차시 · 출발·정지·속도</span></h1>
+    <h1 style="margin:0;font-size:1.25rem">🐣 알티노 걸음마 가르치기 <span class="lead" style="display:inline">출발·정지·속도</span></h1>
   </div>
   <div id="kitBar"></div>
 </div>
@@ -172,16 +172,15 @@
       <div class="tries" id="tries"></div>
       <p class="say" id="testMsg">속도를 고르면 시작해요.</p>
       <ol class="rules">
-        <li>신호원이 "출발!" 하면 조종사가 ▲를 눌러요.</li>
-        <li>기록원이 줄자로 보고 ⭕·❌를 눌러요.</li>
-        <li>다른 모둠은 박수와 응원으로 기다려요.</li>
+        <li>보호자가 "출발!" 하면 아이가 ▲를 눌러요.</li>
+        <li>보호자가 줄자로 보고 ⭕·❌를 눌러요.</li>
       </ol>
     </section>
     <section class="card center">
       <h2>▲ 앞으로 버튼은 한 번만! 손을 떼면 그 판은 끝나요</h2>
       <button class="go" id="go" disabled>▲ 앞으로</button>
       <div id="judgeBox" class="hidden">
-        <p class="say">기록원: 정지선 앞뒤 10cm 안에 멈췄나요?</p>
+        <p class="say">보호자: 정지선 앞뒤 10cm 안에 멈췄나요?</p>
         <div class="judge"><button id="judgeOk" class="btn mint">⭕ 성공</button><button id="judgeNo" class="btn coral">❌ 실패</button></div>
       </div>
       <div id="resultBox" class="result hidden"></div>
