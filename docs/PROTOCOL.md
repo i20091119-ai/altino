@@ -140,6 +140,8 @@
 
 ## 부록 L. 알티노 라이트(Altino Lite) 프레임 (2026-10-08)
 
+> ⚠ 2026-11-17: 이 부록보다 `docs/ALTINO_LITE_ORCHESTRA2.md` 가 우선이다. 아래의 "`[4]=0x03` 센서 요청"은 틀렸다(조향 설정 읽기다). 구형 알티노(28/56)도 그 문서에 있다.
+
 > 출처: 오케스트라2 v1.5.0 APK 의 `lib/arm64-v8a/libapp.so`(Flutter, Dart 2.19.3)를 blutter 로 역컴파일한
 > `package:orchestra2/io/extensions/altinoLite.dart` (`AltinoLite` 클래스 생성자·`requestData`·`setDrivePwr`·`setSteeringByte`·
 > `setBuzzerByte`·`indicatorLedHex`). **실물 라이트로 바이트 검증은 아직** — 첫 연결 때 확인할 것.
