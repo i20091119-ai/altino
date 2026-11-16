@@ -392,7 +392,7 @@
       Object.assign(sensor, f);
       lastRxAt = Date.now();
       const b = $('kitBatt');
-      if (b && f.battery > 0) { b.style.display = ''; b.textContent = '🔋 ' + f.battery; b.classList.toggle('low', P.getModel() === 'classic' ? P.batteryPct(f.battery) < 15 : f.battery < BATT_LOW); }
+      if (b && f.battery > 0) { b.style.display = ''; b.textContent = '🔋 ' + (P.getModel() === 'classic' ? P.batteryPct(f.battery) + '%' : f.battery); b.classList.toggle('low', P.getModel() === 'classic' ? P.batteryPct(f.battery) < 15 : f.battery < BATT_LOW); }
       if (typeof o.onSensor === 'function') { try { o.onSensor(sensor, api); } catch (e) { console.error(e); } }
     }
 
