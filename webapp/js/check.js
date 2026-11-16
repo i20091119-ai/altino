@@ -79,6 +79,51 @@
     $(id).onchange = () => { Camp.settings.set(key, $(id).value); kit.toast('센서 자리 저장'); };
   });
 
+  // ── 프레임 실험 ──
+  // 연결·쓰기는 되는데 로봇이 답하지 않을 때(2026-11-17 실기: 쓰기 성공 1078, 받은 묶음 0) 어느 조합이 맞는지 실물로 가른다.
+  // 조합마다 2.5초 동안 소리(솔)·불빛·도트를 켠 프레임을, 이어서 1.5초 동안 끈 프레임을 보낸다. 바퀴는 돌리지 않는다.
+  const EXP = [];
+  for (const [kind, name] of [['l1', '라이트 [4]=01'], ['l3', '라이트 [4]=03'], ['l13', '라이트 01·03 번갈아'], ['neo', '네오 26B']])
+    for (const split of (kind === 'neo' ? [false] : [false, true]))
+      for (const resp of [false, true])
+        EXP.push({ kind, split, resp, label: name + (kind === 'neo' ? '' : (split ? ' · 14+8 나눠' : ' · 한 번에')) + (resp ? ' · 응답 있는 쓰기' : ' · 응답 없는 쓰기') });
+  const exp = { i: -1, timer: null, rx: [], hits: [], n: 0 };
+  function expFrame(v, on) {
+    const st = new P.AltinoState();
+    if (on) { st.soundSet(44); st.ledSet(v.kind === 'neo' ? 0xFFFF : 0xFF); st.displayMode = 0xFF; st.dot.set([0x3C, 0x42, 0xA5, 0x81, 0xA5, 0x99, 0x42, 0x3C]); }
+    if (v.kind === 'neo') return P.buildFrame(st, 'neo');
+    if (v.kind === 'l1') return P.buildLiteFrame(st);
+    if (v.kind === 'l3') return P.buildLiteRequest(st);
+    return (exp.n++ % 2) ? P.buildLiteRequest(st) : P.buildLiteFrame(st);
+  }
+  function expStop(msg) {
+    clearTimeout(exp.timer); exp.timer = null; exp.i = -1; kit.rawFrames(null);
+    try { window.AltinoNative.setTxOptions(true, false); } catch (e) {}
+    $('expGo').textContent = '시작'; $('expNo').textContent = '–'; $('expLbl').textContent = msg || '멈췄어요.';
+  }
+  function expStep(i) {
+    if (i >= EXP.length) return expStop('끝났어요. 아래 점검 결과를 복사해 보내 주세요.');
+    const v = EXP[i]; exp.i = i;
+    const base = kit.debug.rxBytes;
+    try { window.AltinoNative.setTxOptions(v.split, v.resp); } catch (e) {}
+    $('expNo').textContent = (i + 1) + '/' + EXP.length; $('expLbl').textContent = v.label;
+    kit.rawFrames(() => expFrame(v, true));
+    exp.timer = setTimeout(() => {
+      kit.rawFrames(() => expFrame(v, false));
+      exp.timer = setTimeout(() => { exp.rx[i] = kit.debug.rxBytes - base; expStep(i + 1); }, 1500);
+    }, 2500);
+  }
+  $('expGo').onclick = () => {
+    if (exp.timer) return expStop();
+    if (!kit.connected) { kit.toast('먼저 로봇을 연결해 주세요'); return; }
+    exp.rx = []; exp.hits = []; $('expHits').textContent = '–'; $('expGo').textContent = '멈춤'; expStep(0);
+  };
+  $('expHit').onclick = () => {
+    if (exp.i < 0) { kit.toast('실험 중에만 눌러요'); return; }
+    if (!exp.hits.includes(exp.i + 1)) exp.hits.push(exp.i + 1);
+    $('expHits').textContent = exp.hits.join(', ');
+  };
+
   // ── 점검 결과(복사해서 보내기) ──
   function report() {
     const st = kit.robotInfo(), s = Camp.settings.all(), d = kit.debug;
@@ -98,6 +143,8 @@
         `쓰기 성공 ${g.wOk} 실패 ${g.wFail}(코드 ${g.lastWStatus}) 거부 ${g.wReject} · 받은 묶음 ${g.rxPkts} (${g.rxBytes}바이트)`,
         'GATT ' + g.gatt);
     } catch (e) {}
+    if (exp.rx.length) lines.push('실험(번호:받은 바이트) ' + exp.rx.map((b, i) => (i + 1) + ':' + (b == null ? '-' : b)).join(' ') + ' · 반응한 번호 ' + (exp.hits.join(',') || '없음'),
+      '실험 조합 ' + EXP.map((v, i) => (i + 1) + '=' + v.kind + (v.split ? '/나눔' : '/한번') + (v.resp ? '/응답' : '/무응답')).join(' '));
     if (document.activeElement !== $('report')) $('report').value = lines.join('\n');
   }
   $('copy').onclick = async () => {

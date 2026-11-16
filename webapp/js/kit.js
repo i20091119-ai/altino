@@ -262,8 +262,11 @@
       probe.at = Date.now(); probe.stage++;         // 두 기종 다 답이 없으면 처음 기종으로 돌아와 멈춘다
     }
     let sendN = 0;
+    // 점검 화면 '프레임 실험'용: 함수가 걸려 있으면 평소 프레임 대신 그 함수가 준 바이트를 그대로 보낸다(10Hz 는 그대로).
+    let rawFn = null;
     function send() {
       if (!transport || !transport.connected) return;
+      if (rawFn) { try { const fr = rawFn(); if (fr) { debug.tx = fr; debug.txCount++; transport.send(fr); } } catch (e) {} return; }
       try {
         const fr = P.buildFrame(state); debug.tx = fr; debug.txCount++; transport.send(fr);
         // 라이트: 두 번에 한 번 센서 요청을 끼워 보낸다(protocol.js buildLiteRequest 참고)
@@ -518,6 +521,7 @@
       toast, confirm: (opts2) => window.AltinoUI.confirm(opts2),
       openConnect, stickerCode, josa,
       debug,
+      rawFrames(fn) { rawFn = (typeof fn === 'function') ? fn : null; },
       robotInfo: () => { try { return T.AndroidBridgeTransport.supported ? new T.AndroidBridgeTransport().state() : { name: '가짜 로봇(브라우저)', address: '', connected: true }; } catch (e) { return {}; } },
     };
     window.__altinoKit = api;          // 시험 도구가 들여다보는 창구(앱에서 쓰지 말 것)
