@@ -1,6 +1,6 @@
 // t02 알티노 걸음마 가르치기 (3–4차시) — 기획서 docs/topics/t02.md
-// ① 걸음마 연습(패드·속도 막대·구령 놀이) → ② 속도의 비밀 찾기(앱이 재는 3초 달리기)
-// → ③ 걸음마 시험(앞으로 버튼 한 번, 보호자가 성공·실패, 3번 중 2번 성공이면 합격)
+// ① 똑바로 가기(직진 영점 맞추기) → ② 걸음마 연습(패드·속도 막대·구령 놀이) → ③ 속도의 비밀 찾기(앱이 재는 3초 달리기)
+// → ④ 걸음마 시험(앞으로 버튼 한 번, 보호자가 성공·실패, 3번 중 2번 성공이면 합격)
 'use strict';
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -9,6 +9,7 @@
     appId: 't02',
     title: '알티노 걸음마 가르치기',
     onRunEnd: endRun,
+    onStatus: () => { try { paintTrim(); } catch (e) {} },
   });
 
   const RUN_MS = 3000;                       // 실험은 언제나 3초
@@ -20,20 +21,59 @@
   ];
   const TRIES = 3, PASS = 2;
 
-  let goHold = null;
+  let goHold = null, stHold = null;
   // ── 단계 ─────────────────────────────────────────────────────────
-  let step = kit.store.num('step', 1, 1, 3);
+  // 저장 이름을 step → stage 로 바꿨다(① 똑바로 가기가 앞에 생겨 번호가 하나씩 밀렸다. 예전 값은 쓰지 않는다)
+  let step = kit.store.num('stage', 1, 1, 4);
   function showStep(n) {
     if (kit.running) kit.stop();
-    if (n !== 1) releasePad();
-    if (n !== 3 && goHold) goHold.release();     // 시험 버튼을 누른 채 단계를 바꿔도 멈춘다
-    step = n; kit.store.set('step', n);
+    if (n !== 1 && stHold) stHold.release();
+    if (n !== 2) releasePad();
+    if (n !== 4 && goHold) goHold.release();     // 시험 버튼을 누른 채 단계를 바꿔도 멈춘다
+    step = n; kit.store.set('stage', n);
+    if (n === 1) paintTrim();
     document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('on', +b.dataset.step === n));
     document.querySelectorAll('.page').forEach(p => p.classList.toggle('hidden', +p.dataset.page !== n));
   }
   document.querySelectorAll('#steps button').forEach(b => { b.onclick = () => showStep(+b.dataset.step); });
 
-  // ── ① 걸음마 연습: 조종 패드 ─────────────────────────────────────
+  // ── ① 똑바로 가기: 직진 영점 ─────────────────────────────────────
+  // 속도 300·조향 0 으로 달려 보고, 휘는 쪽의 반대로 영점을 한 칸씩 옮긴다. 값은 kit 이 로봇별로 저장한다.
+  // 조향 +값 = 오른쪽. 실물에서 반대로 움직이면 아래 NUDGE 의 부호만 바꾼다(단추 글은 그대로).
+  const ST_SPEED = 300, NUDGE = { left: +1, right: -1 }, BEND_MAX = 5, OK_NEED = 2;
+  let stWait = false, stDown = 0, stOk = 0, stBends = 0;
+  function paintTrim() {
+    const v = kit.trim.get();
+    $('trimVal').textContent = kit.trim.label(v);
+    $('trimDot').style.left = (50 + (v / kit.trim.MAX) * 50) + '%';
+    $('stGo').disabled = stWait;
+    ['stLeft', 'stOk', 'stRight'].forEach(id => { $(id).disabled = !stWait; });
+    $('stDone').classList.toggle('hidden', stOk < OK_NEED);
+    $('stHelp').classList.toggle('hidden', !(stBends > BEND_MAX || Math.abs(v) >= kit.trim.MAX));
+  }
+  stHold = kit.hold($('stGo'),
+    () => { if (stWait) return; stDown = Date.now(); kit.drive(ST_SPEED, 0); $('stMsg').textContent = '달리는 중… 줄 끝에서 손을 떼요!'; },
+    () => {
+      kit.drive(0, 0);
+      if (!stDown) return;
+      stDown = 0; stWait = true;                   // 한 번 떼면 결과를 고를 때까지 잠근다
+      $('stMsg').textContent = '어떻게 갔나요? 아래에서 골라요.'; paintTrim();
+    });
+  function stResult(kind) {
+    if (!stWait) return;
+    if (kind === 'ok') { stOk++; $('stMsg').textContent = stOk >= OK_NEED ? '두 번 연속 똑바로! 이제 걸음마를 연습해요.' : '좋아요! 한 번 더 확인해요.'; }
+    else {
+      stOk = 0; stBends++;
+      if (kit.trim.nudge(NUDGE[kind])) $('stMsg').textContent = '영점을 조금 옮겼어요. 다시 달려 봐요.';
+      else { $('stMsg').textContent = '로봇을 먼저 연결해 주세요.'; kit.toast('영점은 로봇이 연결돼 있어야 바꿀 수 있어요'); }
+    }
+    stWait = false; paintTrim();
+  }
+  $('stLeft').onclick = () => stResult('left');
+  $('stOk').onclick = () => stResult('ok');
+  $('stRight').onclick = () => stResult('right');
+
+  // ── ② 걸음마 연습: 조종 패드 ─────────────────────────────────────
   let speed = kit.store.num('speed', 300, 0, 500);
   $('spd').value = speed; $('spdVal').textContent = speed;
   $('spd').addEventListener('input', (e) => { speed = +e.target.value; $('spdVal').textContent = speed; kit.store.set('speed', speed); apply(); });
@@ -77,7 +117,7 @@
   };
   $('roleReset').onclick = () => { clearInterval(roleTimer); roleTimer = null; $('roleClock').textContent = fmt(ROLE_MS); $('roleStart').textContent = '⏱ 2분 시작'; };
 
-  // ── ② 속도의 비밀 찾기: 3초 달리기 실험 ─────────────────────────
+  // ── ③ 속도의 비밀 찾기: 3초 달리기 실험 ─────────────────────────
   // exp = { '300': { p: 예상, a: 실제 }, ... }  — 예상은 출발 전에 잠근다(PPT 26쪽 규칙)
   let exp = kit.store.get('exp', {});
   if (!exp || typeof exp !== 'object') exp = {};
@@ -196,7 +236,7 @@
     $('insight').textContent = msg;
   }
 
-  // ── ③ 걸음마 시험 ────────────────────────────────────────────────
+  // ── ④ 걸음마 시험 ────────────────────────────────────────────────
   // test = { speed, results: [true/false…] }  — 판정은 보호자가 줄자로(바닥 센서가 없다, 03 §10)
   let test = kit.store.get('test', null);
   if (!test || !BADGES.some(b => b.speed === test.speed) || !Array.isArray(test.results)) test = null;

@@ -19,6 +19,7 @@ class AltinoState {
     this.dot = new Uint8Array(8); // 도트 8행 (displayMode=0xFF일 때 사용)
     this.sound = 0;         // 0..255
     this.led = 0;           // 0..65535 비트마스크
+    this.steerTrim = 0;     // 구형 전용 [25] 조향 보정값(점검 화면 실험에서만 0 이 아니다)
   }
 
   // --- APK의 static 명령 메서드들을 그대로 옮긴 것 ---
@@ -107,7 +108,9 @@ function buildClassicFrame(st) {
   b[21] = 0x0A | ((st.led >> 8) & 0xF0);                    // 위 4비트 = 불빛(브레이크등 0xC0)
   b[22] = st.sound & 0xFF;
   b[23] = st.led & 0xFF;                                    // 전조등 1|2 · 후진등 4|8 · 깜빡이 오른 0x10|0x40 왼 0x20|0x80
-  b[24] = 0x01; b[27] = 0x03;
+  b[24] = 0x01;
+  { const t = clamp(st.steerTrim | 0, -127, 127); b[25] = t < 0 ? ((-t) + 128) & 0xFF : t; }   // 음수는 |값|+128 (Altino.cs WriteSteeringTrim)
+  b[27] = 0x03;
   let sum = 0;
   for (let i = 1; i <= 27; i++) if (i !== 2) sum += b[i];
   b[2] = sum & 0xFF;
