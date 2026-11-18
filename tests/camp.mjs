@@ -137,6 +137,81 @@ console.log('■ ⑤ AI 손짓');
   ok(!p._errs.length, '오류 없음' + (p._errs.length ? ' — ' + p._errs.join(' | ') : ''));
   await p.context().close();
 }
+// 7) 직진 영점: 기종별 프레임 · 자르기 · 로봇별 저장 · 도전 중 잠금 · 걸음마 ① 흐름
+async function openRobot(pg, addr, name) {
+  const ctx = await br.newContext({ viewport: { width: 1280, height: 800 } });
+  await ctx.addInitScript(`window.__STUB_CFG={connected:true,address:'${addr}',name:'${name}'};` + STUB);
+  const p = await ctx.newPage(); p._errs = []; p.on('pageerror', e => p._errs.push(e.message));
+  await p.goto(BASE + '/' + pg); await p.waitForTimeout(600);
+  // 기종 찾기가 시험 도중 기종을 바꾸지 않게 고정한다(가짜 로봇은 답을 하지 않는다)
+  await p.evaluate(() => { const P = window.AltinoProtocol; window.__setModel = P.setModel; P.setModel = () => {}; });
+  return p;
+}
+const steerByte = (p, model, trim, steer) => p.evaluate(async ([model, trim, steer]) => {
+  window.__setModel(model); const k = window.__altinoKit;
+  if (!k.trim.set(trim)) return 'set 실패';
+  k.drive(0, steer); await new Promise(r => setTimeout(r, 300));
+  const f = window.__txFrames.slice(-1)[0]; k.drive(0, 0);
+  return f.length + ':' + f[5];
+}, [model, trim, steer]);
+console.log('■ 직진 영점');
+{
+  const A = 'AA:AA:AA:AA:AA:01', B = 'AA:AA:AA:AA:AA:02';
+  const p = await openRobot('t01.html', A, 'ALTINO-NBF16');
+  ok(await steerByte(p, 'neo', 6, 0) === '26:6', '올뉴: 영점 +6 → [5]=6 (멈춰 있어도 더함)');
+  ok(await steerByte(p, 'neo', -6, 0) === '26:249', '올뉴: 영점 -6 → [5]=~6 (1의 보수)');
+  ok(await steerByte(p, 'lite', 6, 0) === '22:6', '라이트: 영점 +6 → [5]=6');
+  ok(await steerByte(p, 'lite', -6, 0) === '22:249', '라이트: 영점 -6 → [5]=~6');
+  ok(await steerByte(p, 'classic', 6, 57) === '28:106', '구형: 조향 57 → 배율 뒤 100 + 영점 6 = 106');
+  ok(await steerByte(p, 'classic', -6, 0) === '28:134', '구형: 영점 -6 → 6 | 0x80');
+  ok(await steerByte(p, 'neo', 6, 127) === '26:127', '자르기: 조향 127 + 영점 6 → 127');
+  ok(await p.evaluate(() => { const k = window.__altinoKit; k.trim.set(99); return k.trim.get(); }) === 30, '영점 범위는 ±30');
+  // 로봇별 저장
+  const sw = (addr) => p.evaluate((addr) => { window.__STUB_CFG.address = addr; window.__altinoOnStatus('connected'); return window.__altinoKit.trim.get(); }, addr);
+  await p.evaluate(() => window.__altinoKit.trim.set(6));
+  ok(await sw(B) === 0, '다른 로봇으로 연결하면 영점 0');
+  ok(await sw(A) === 6, '원래 로봇으로 돌아오면 영점 복원');
+  await p.context().close();
+}
+{
+  const p = await openRobot('c01.html', 'AA:AA:AA:AA:AA:03', 'ALTINO-NBF16');
+  await p.evaluate(() => window.__altinoKit.trim.set(6));
+  await p.click('.seg [data-m="challenge"]'); await p.click('text=도전 시작');
+  ok((await p.textContent('.trimtag')) === '영점 +6', '경기장 진행 바에 영점 표시');
+  ok(await p.evaluate(() => { const k = window.__altinoKit; return k.trim.locked() && k.trim.nudge(1) === false && k.trim.get() === 6; }), '도전 중에는 영점을 바꿀 수 없음');
+  for (let i = 0; i < 3; i++) { await holdEl(p, '.judge .coral', 800); await p.waitForTimeout(150); }
+  await p.click('#chOk');
+  ok(await p.evaluate(() => { const k = window.__altinoKit; return !k.trim.locked() && k.trim.nudge(1) === true && k.trim.get() === 9; }), '도전이 끝나면 풀림');
+  ok(!p._errs.length, '오류 없음' + (p._errs.length ? ' — ' + p._errs.join(' | ') : ''));
+  await p.context().close();
+}
+{
+  const p = await openRobot('t02.html', 'AA:AA:AA:AA:AA:04', 'ALTINO-NBF16');
+  ok(await p.locator('#stGo').isVisible() && (await p.textContent('#steps .on')) === '① 똑바로 가기', '걸음마를 열면 ① 똑바로 가기');
+  const run = async (btn) => { await holdEl(p, '#stGo', 350); await p.waitForTimeout(200); await p.click(btn); };
+  await holdEl(p, '#stGo', 350); await p.waitForTimeout(200);
+  const sent = await p.evaluate(() => window.__tx.includes(300));
+  ok(sent && await p.locator('#stGo').isDisabled() && !(await p.locator('#stLeft').isDisabled()), '속도 300 으로 달리고, 떼면 결과를 고를 때까지 잠김');
+  await p.click('#stLeft');
+  ok((await p.textContent('#trimVal')) === '영점 +3', '왼쪽으로 휘었어요 → 영점 +3 (오른쪽으로)');
+  await run('#stRight'); await run('#stRight');
+  ok((await p.textContent('#trimVal')) === '영점 -3', '오른쪽으로 휘었어요 두 번 → 영점 -3');
+  await run('#stOk');
+  ok(await p.locator('#stDone').isHidden(), '똑바로 한 번으로는 완료가 아님');
+  await run('#stOk');
+  ok(await p.locator('#stDone').isVisible() && (await p.textContent('#stDone')) === '영점 저장 · 완료', '똑바로 두 번 연속 → 영점 저장 · 완료');
+  ok(await p.evaluate(() => localStorage.getItem('altino.trim.AA:AA:AA:AA:AA:04')) === '-3', '값은 로봇 주소에 저장');
+  ok(await p.locator('#stHelp').isHidden(), '아직 선생님 호출 아님(휘었어요 3번)');
+  await run('#stLeft'); await run('#stRight');
+  ok(await p.locator('#stHelp').isHidden() && await p.locator('#stDone').isHidden(), '휘었어요 5번까지는 그대로 · 완료 표시는 꺼짐');
+  await run('#stLeft');
+  ok(await p.locator('#stHelp').isVisible() && (await p.textContent('#stHelp')) === '선생님을 불러 주세요', '휘었어요 6번째 → 선생님을 불러 주세요');
+  await p.screenshot({ path: path.join(SHOTS, 't02_straight.png') });
+  await p.click('#steps [data-step="2"]'); await p.waitForTimeout(200);
+  ok(await p.locator('#d-up').isVisible(), '② 걸음마 연습으로 넘어감');
+  ok(!p._errs.length, '오류 없음' + (p._errs.length ? ' — ' + p._errs.join(' | ') : ''));
+  await p.context().close();
+}
 await br.close(); server.close();
 console.log(fail ? `\n실패 ${fail}건` : '\n모두 통과');
 process.exit(fail ? 1 : 0);

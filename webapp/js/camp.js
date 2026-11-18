@@ -46,6 +46,7 @@
   const DEFAULTS = {
     ledMask: 15,                      // 앞 등(네오 실측값). 라이트는 점검 화면에서 찾아 저장
     irLeft: 'ir1', irCenter: 'ir2', irRight: 'ir3',   // 앞쪽 센서 자리(네오 기준)
+    trimStep: 3,                                      // 직진 영점 한 칸(조향 원값 1~10). kit.trim.step() 이 읽는다
   };
   const settings = {
     all() { return Object.assign({}, DEFAULTS, LS.get('altino.camp.settings', {})); },
@@ -76,6 +77,7 @@
     });
     const hearts = el('div', 'hearts');
     const timer = el('div', 'timer', '4:00');
+    const trimTag = el('div', 'trimtag', '영점 0');     // 읽기 전용. 영점은 걸음마(t02 ①)에서만 맞춘다
     const startBtn = el('button', 'btn', '도전 시작'); startBtn.type = 'button';
     const judge = el('div', 'judge');
     const okBtn = el('button', 'btn leaf', '<span class="fill"></span>심판 ⭕'); okBtn.type = 'button';
@@ -83,7 +85,7 @@
     judge.append(okBtn, noBtn);
     let bonusBtn = null;
     if (A.bonus) { bonusBtn = el('button', 'btn sun sm', `<span class="fill"></span>${A.bonus.label} +${A.bonus.pts}`); bonusBtn.type = 'button'; judge.appendChild(bonusBtn); }
-    mount.append(seg, levels, hearts, timer, startBtn, judge);
+    mount.append(seg, levels, trimTag, hearts, timer, startBtn, judge);
 
     // 결과 창
     const modal = el('div', 'modal hidden');
@@ -118,7 +120,7 @@
       st.mode = m; st.active = false; st.level = 1; st.lives = LIVES; st.best = 0; st.bonus = 0; st.lastPassMs = 0;
       clearInterval(timerH); timer.textContent = fmt(LIMIT_MS); timer.classList.remove('low');
       if (bonusBtn) bonusBtn.disabled = false;
-      if (kit) kit.stop();
+      if (kit) { kit.stop(); kit.trim.lock(false); }
       paint(); emit();
     }
     function begin() {
@@ -129,7 +131,7 @@
         timer.textContent = fmt(left); timer.classList.toggle('low', left < 30000);
         if (left <= 0) finish('time');
       }, 250);
-      if (kit) kit.signal('start');
+      if (kit) { kit.trim.lock(true); kit.signal('start'); }   // 도전 중에는 영점을 바꿀 수 없다
       paint(); emit();
     }
     function pass() {
@@ -148,7 +150,7 @@
     function finish(why) {
       if (!st.active) return;
       st.active = false; clearInterval(timerH);
-      if (kit) kit.stop();
+      if (kit) { kit.stop(); kit.trim.lock(false); }
       const pts = st.best ? POINTS[st.best - 1] : 0;
       const rec = { level: st.best, pts, bonus: st.bonus, ms: st.lastPassMs, at: Date.now() };
       results.save(A.id, rec);
@@ -170,6 +172,7 @@
         b.classList.toggle('done', st.mode === 'challenge' && n <= st.best);
         b.disabled = st.mode !== 'practice';
       });
+      if (kit) trimTag.textContent = kit.trim.label();
       const ch = st.mode === 'challenge';
       hearts.style.display = ch ? '' : 'none';
       timer.style.display = ch ? '' : 'none';
@@ -190,6 +193,7 @@
       elapsed: () => (st.active ? Date.now() - st.startAt : 0),
     };
     paint();
+    if (kit) setInterval(() => { trimTag.textContent = kit.trim.label(); }, 2000);   // 로봇이 나중에 연결되거나 바뀌어도 맞게
     setTimeout(emit, 0);
     return api;
   }

@@ -33,6 +33,9 @@
   // 구형 알티노는 같은 조향 값에 앞바퀴가 덜 꺾인다(2026-11-17 실기: 127 이 오케스트라2 의 끝까지 꺾은 것과 같고, 57 은 '많이 안 돌아감').
   // 화면들의 조향 값(57·100 등)은 네오에서 맞춘 것이라, 구형일 때만 이만큼 키워 보낸다. 점검 화면은 rawSteer 로 끈다. 배율은 실측 전 값.
   const STEER_GAIN_CLASSIC = 1.75;
+  // 직진 영점(조향 보정). 로봇마다 앞바퀴의 '가운데'가 조금씩 달라 똑바로 못 가는 것을 조향 원값에 더해 고친다.
+  // 로봇 주소별로 태블릿에 저장한다(altino.trim.<주소>). 걸음마(t02 ①)에서 가족이 맞추고, 모든 화면의 주행에 적용된다.
+  const TRIM_MAX = 30, TRIM_STEP = 3;
   const RECORD_MAX = 300;
 
   let created = false;                     // 한 화면에 kit 은 하나만
@@ -241,10 +244,52 @@
       if (o.kick !== false && m !== 0 && lastM === 0 && Math.abs(m) < KICK_BELOW) kickUntil = Date.now() + KICK_MS;
       lastM = m;
       const out = (m !== 0 && Date.now() < kickUntil) ? Math.sign(m) * KICK : m;
-      if (st !== 0 && o.rawSteer !== true && P.getModel() === 'classic') st = Math.max(-127, Math.min(127, Math.round(st * STEER_GAIN_CLASSIC)));
-      state.go(out, out); state.steer(st);
+      steerOut(st);
+      const b = trimX.bias;                                  // 점검 화면 실험(좌우 구동 차). 평소엔 0
+      if (b) state.go(Math.round(out * (1 + b)), Math.round(out * (1 - b))); else state.go(out, out);
       send();
     }
+    // 조향 내보내기: (구형이면 배율) → 영점 더하기 → 자르기. 멈춰 있을 때·창이 떠 있을 때도 영점은 더한다(앞바퀴가 쉬는 자리 = 고친 가운데).
+    function steerOut(st) {
+      const classic = P.getModel() === 'classic';
+      if (st !== 0 && o.rawSteer !== true && classic) st = Math.round(st * STEER_GAIN_CLASSIC);
+      const t = trimX.off ? 0 : trimVal;
+      const fw = trimX.fw && classic;                        // 점검 화면 실험: 구형 [25] 로 보정을 보낸다(앱 쪽 더하기와 둘 중 하나만)
+      state.steerTrim = fw ? t : 0;
+      state.steer(Math.max(-127, Math.min(127, st + (fw ? 0 : t))));
+    }
+    // ── 직진 영점 ────────────────────────────────────────────────────
+    let trimVal = 0, trimAddr = '', trimLocked = false;
+    const trimX = { off: false, bias: 0, fw: false };        // 점검 화면에서만 바꾸는 값(저장하지 않는다 — 화면을 나가면 사라진다)
+    const robotAddr = () => { try { return T.AndroidBridgeTransport.supported ? (new T.AndroidBridgeTransport().state().address || '') : ''; } catch (e) { return ''; } };
+    function trimLoad() {                                    // 지금 로봇의 값을 읽는다(로봇을 바꾸면 그 로봇의 값). 주소가 없으면 0
+      trimAddr = robotAddr();
+      const v = trimAddr ? Math.round(Number(raw.get('altino.trim.' + trimAddr))) : 0;
+      trimVal = Number.isFinite(v) ? Math.max(-TRIM_MAX, Math.min(TRIM_MAX, v)) : 0;
+      return trimVal;
+    }
+    const trim = {
+      MAX: TRIM_MAX,
+      get: () => trimLoad(),
+      step() { let s = TRIM_STEP; try { const c = JSON.parse(raw.get('altino.camp.settings') || '{}'); if (c && c.trimStep != null) s = Number(c.trimStep); } catch (e) {} return Number.isFinite(s) ? Math.max(1, Math.min(10, Math.round(s))) : TRIM_STEP; },
+      // 잠겨 있거나(경기장 도전 중) 로봇 주소가 없으면 바꾸지 않고 false
+      set(v) {
+        if (trimLocked) return false;
+        trimLoad(); if (!trimAddr) return false;
+        v = Math.round(Number(v)); if (!Number.isFinite(v)) return false;
+        trimVal = Math.max(-TRIM_MAX, Math.min(TRIM_MAX, v));
+        raw.set('altino.trim.' + trimAddr, String(trimVal));
+        return true;
+      },
+      nudge(dir) { return trim.set(trimLoad() + (dir < 0 ? -1 : 1) * trim.step()); },   // +1 오른쪽 / −1 왼쪽
+      lock(on) { trimLocked = !!on; },
+      locked: () => trimLocked,
+      label: (v) => { v = (v == null ? trimLoad() : v); return '영점 ' + (v > 0 ? '+' + v : String(v)); },
+      // 아래 셋은 점검 화면 전용
+      off(on) { if (on != null) trimX.off = !!on; return trimX.off; },
+      bias(v) { if (v != null) { v = Number(v); trimX.bias = Number.isFinite(v) ? Math.max(-0.10, Math.min(0.10, v)) : 0; } return trimX.bias; },
+      fw(on) { if (on != null) trimX.fw = !!on; return trimX.fw; },
+    };
     // 점검 화면용 기록(캠프 앱에서 보탬): 마지막으로 보낸·받은 바이트와 개수
     const debug = { tx: null, txCount: 0, rx: null, rxBytes: 0, rxFrames: 0 };
     // ── 기종 찾기 (캠프 앱에서 보탬) ─────────────────────────────────────
@@ -290,7 +335,7 @@
       motion.m = 0; motion.steer = 0; lastM = 0;
       clearTimeout(soundTimer);
       sigTimers.forEach(clearTimeout); sigTimers = [];     // 재생 중인 신호도 끊는다
-      state.go(0, 0); state.steer(0); state.soundSet(0); state.ledSet(0);
+      state.go(0, 0); steerOut(0); state.soundSet(0); state.ledSet(0);
       send();
       if (wasRunning && typeof o.onRunEnd === 'function') { try { o.onRunEnd(); } catch (e) { console.error(e); } }
     }
@@ -406,7 +451,7 @@
         const base = String(s).split(':')[0];
         noteReconnect(base);
         renderBar();
-        if (base === 'connected') { setStatus('🔗 연결됨 ✓', 'ok'); toast('로봇 연결됨'); probeStart(); }
+        if (base === 'connected') { setStatus('🔗 연결됨 ✓', 'ok'); toast('로봇 연결됨'); probeStart(); trimLoad(); }
         else if (base === 'connecting') setStatus('🔗 연결 중…', 'pending');
         else if (base === 'reconnecting') setStatus('🔗 재연결 중…', 'pending');
         else if (base === 'disconnected') setStatus('🔗 연결 끊김', 'err');
@@ -429,7 +474,7 @@
                  : '⚠ 짝지은 로봇이 없어요 — 상단 🔗 을 눌러 차를 고르세요', 5000);
     }
     function start() {
-      renderBar();
+      renderBar(); trimLoad();
       if (T.AndroidBridgeTransport.supported) {
         transport = new T.AndroidBridgeTransport(); wire(transport);
         const st = transport.state();
@@ -525,7 +570,7 @@
       store, team, record, share,
       toast, confirm: (opts2) => window.AltinoUI.confirm(opts2),
       openConnect, stickerCode, josa,
-      debug,
+      debug, trim,
       rawFrames(fn) { rawFn = (typeof fn === 'function') ? fn : null; },
       robotInfo: () => { try { return T.AndroidBridgeTransport.supported ? new T.AndroidBridgeTransport().state() : { name: '가짜 로봇(브라우저)', address: '', connected: true }; } catch (e) { return {}; } },
     };

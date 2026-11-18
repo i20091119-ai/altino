@@ -66,6 +66,7 @@ input[type=range]{width:100%;accent-color:var(--theme)}
 input[type=text],input[type=number],select{font-family:inherit;font-size:1rem;padding:8px 12px;border-radius:12px;border:2px solid var(--line);color:var(--ink);background:#fff}
 
 /* ── 도전 진행 바 (camp.js 가 채운다) ── */
+.chbar .trimtag{flex:none;font-size:.85rem;color:var(--mut);border:2px solid var(--line);border-radius:999px;padding:5px 10px;white-space:nowrap}
 .chbar{flex:none;display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);border-radius:20px;padding:8px 12px;box-shadow:var(--shadow)}
 .seg{display:inline-flex;background:var(--tint);border-radius:14px;padding:4px}
 .seg button{border:0;background:transparent;font-family:inherit;font-weight:700;font-size:.95rem;color:var(--mut);padding:8px 14px;border-radius:11px}

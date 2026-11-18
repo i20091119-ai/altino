@@ -36,7 +36,7 @@
       min[k] = min[k] == null ? v : Math.min(min[k], v); max[k] = max[k] == null ? v : Math.max(max[k], v);
       $('s-' + k).textContent = v; $('lo-' + k).textContent = min[k]; $('hi-' + k).textContent = max[k];
     }
-    info(); report();
+    info(); report(); paintTrim();
   }, 1000);
 
   // ── 움직임 ──
@@ -79,6 +79,20 @@
     $(id).value = Camp.settings.get(key);
     $(id).onchange = () => { Camp.settings.set(key, $(id).value); kit.toast('센서 자리 저장'); };
   });
+
+  // ── 직진 영점 ──
+  // 이 화면은 rawSteer(구형 배율 없음)지만 영점은 더한다 — 여기서 ◀▶ 로 맞춰 보고 바로 달려 볼 수 있게. 원값만 보려면 '영점 끄기'.
+  function paintTrim() { $('tzVal').textContent = kit.trim.label(); $('tzStep').textContent = kit.trim.step(); }
+  const tz = (ok) => { if (!ok) kit.toast('로봇이 연결돼 있어야 영점을 바꿀 수 있어요'); paintTrim(); };
+  $('tzL').onclick = () => tz(kit.trim.nudge(-1));
+  $('tzR').onclick = () => tz(kit.trim.nudge(+1));
+  $('tzZero').onclick = () => tz(kit.trim.set(0));
+  const stepBy = (d) => { Camp.settings.set('trimStep', Math.max(1, Math.min(10, kit.trim.step() + d))); paintTrim(); };
+  $('tzStepM').onclick = () => stepBy(-1);
+  $('tzStepP').onclick = () => stepBy(+1);
+  $('tzOff').onchange = () => kit.trim.off($('tzOff').checked);
+  $('tzBias').addEventListener('input', () => { const v = +$('tzBias').value; $('tzBiasVal').textContent = v; kit.trim.bias(v / 100); });
+  $('tzFw').onchange = () => kit.trim.fw($('tzFw').checked);
 
   // ── 프레임 실험 ──
   // 연결·쓰기는 되는데 로봇이 답하지 않을 때(2026-11-17 실기: 쓰기 성공 1078, 받은 묶음 0) 어느 조합이 맞는지 실물로 가른다.
@@ -132,6 +146,7 @@
       `받은 프레임 ${d.rxFrames} · 받은 바이트 ${d.rxBytes} · 보낸 프레임 ${d.txCount}`,
       '센서(지금/최소/최대): ' + KEYS.map(k => `${k} ${kit.sensor[k] == null ? '-' : kit.sensor[k]}/${min[k] == null ? '-' : min[k]}/${max[k] == null ? '-' : max[k]}`).join(', '),
       `불빛 신호 값 ${s.ledMask} · 앞 센서 자리 왼 ${s.irLeft} 가운데 ${s.irCenter} 오른 ${s.irRight}`,
+      `${kit.trim.label()} · STEP ${kit.trim.step()}` + (kit.trim.off() ? ' · 영점 끔' : '') + (kit.trim.bias() ? ` · 구동 차 ${Math.round(kit.trim.bias() * 100)}%` : '') + (kit.trim.fw() ? ' · [25] 보정' : ''),
       'RX ' + (d.rx ? P.toHex(d.rx) : '-'), 'TX ' + (d.tx ? P.toHex(d.tx) : '-'),
     ];
     // 블루투스 층 진단(앱 1.0.3 두 번째 빌드부터): 고른 특성 · 쓰기 성공 여부 · 받은 묶음 · 서비스 표

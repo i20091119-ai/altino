@@ -74,6 +74,13 @@
     <h2>📏 앞쪽 센서 자리</h2>
     <div class="row"><span class="lead">왼쪽 앞</span><select id="irL"></select><span class="lead">가운데</span><select id="irC"></select><span class="lead">오른쪽 앞</span><select id="irR"></select></div>
     <p class="lead">손을 왼쪽 앞·가운데·오른쪽 앞에 대 보고, 값이 가장 크게 변하는 센서를 골라 주세요.</p>
+    <h2>🎯 직진 영점 <span class="lead" style="margin-left:auto"><b class="sv" id="tzVal">영점 0</b></span></h2>
+    <div class="row"><button id="tzL" class="btn ghost sm">◀ 왼쪽</button><button id="tzR" class="btn ghost sm">오른쪽 ▶</button><button id="tzZero" class="btn sm">0으로</button>
+      <span class="lead">STEP</span><button id="tzStepM" class="btn ghost sm">−</button><b class="sv" id="tzStep">3</b><button id="tzStepP" class="btn ghost sm">+</button></div>
+    <div class="row"><label class="lead"><input type="checkbox" id="tzOff"> 영점 끄기 (이 화면에서만)</label></div>
+    <p class="lead">학생은 걸음마 ① 똑바로 가기에서 맞춰요. 아래는 선생님용 실험(이 화면에서만, 저장 안 됨).</p>
+    <label class="lead">좌우 구동 차 <b class="sv" id="tzBiasVal">0</b>% <input id="tzBias" type="range" min="-10" max="10" step="1" value="0"></label>
+    <div class="row"><label class="lead"><input type="checkbox" id="tzFw"> 구형 전용: 영점을 [25] 보정값으로 보내기</label></div>
     <h2>📝 점검 결과 <button id="copy" class="btn sm" style="margin-left:auto">복사</button></h2>
     <textarea id="report" readonly></textarea>
   </section>
