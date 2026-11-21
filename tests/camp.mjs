@@ -224,6 +224,30 @@ console.log('■ 직진 영점');
   ok(!p._errs.length, '오류 없음' + (p._errs.length ? ' — ' + p._errs.join(' | ') : ''));
   await p.context().close();
 }
+// 8) 표정 만들기: ② 에서 그리는 표정은 로봇에 띄우지 않고, ③ 시험에서 처음 띄운다
+console.log('■ 표정 만들기');
+{
+  const p = await open('t03.html', false);
+  const dots = () => p.evaluate(() => Array.from(window.__altinoKit.state.dot).reduce((a, b) => a + b, 0));
+  await p.click('#steps [data-step="1"]'); await p.click('#grid1 button:nth-child(10)'); await p.waitForTimeout(150);
+  ok(await dots() > 0, '① 은 그리면 로봇 도트에 바로 뜸');
+  await p.click('#steps [data-step="2"]'); await p.waitForTimeout(150);
+  ok(await dots() === 0, '② 로 가면 로봇 도트를 끔');
+  for (let i = 0; i < 4; i++) {
+    await p.click(`#cards button:nth-child(${i + 1})`); await p.click('#feel button:nth-child(' + (i + 1) + ')');
+    // 앞 카드를 저장할 때 뜬 ✓ 아이콘이 남아 있을 수 있다 → '그리기 전과 같은가'로 본다
+    const before = await p.evaluate(() => Array.from(window.__altinoKit.state.dot).join());
+    await p.click(`#grid2 button:nth-child(${10 + i})`); await p.waitForTimeout(100);
+    ok(await p.evaluate(() => Array.from(window.__altinoKit.state.dot).join()) === before, `② 카드 ${i + 1}: 그려도 로봇 도트는 그대로`);
+    await p.click('#save2'); await p.waitForTimeout(100);
+  }
+  ok((await p.textContent('#cards')).includes('단짝이 단체방을'), '고학년 상황 카드');
+  await p.click('#steps [data-step="3"]'); await p.waitForTimeout(150);
+  await p.click('#ask'); await p.waitForTimeout(200);
+  ok(await dots() > 0 && (await p.textContent('#answer')).startsWith('정답'), '③ 표정 내기 → 로봇에 처음 뜨고 아이 화면에 정답');
+  ok(!p._errs.length, '오류 없음' + (p._errs.length ? ' — ' + p._errs.join(' | ') : ''));
+  await p.context().close();
+}
 await br.close(); server.close();
 console.log(fail ? `\n실패 ${fail}건` : '\n모두 통과');
 process.exit(fail ? 1 : 0);

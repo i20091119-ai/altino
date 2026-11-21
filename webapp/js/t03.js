@@ -18,10 +18,11 @@
     { name: '놀람', bytes: [0x00, 0x66, 0x66, 0x00, 0x18, 0x24, 0x24, 0x18] },
   ];
   const CARDS = [
-    { id: 'praise', icon: '🖼', text: '친구가 내 그림을 칭찬했어요' },
-    { id: 'pencil', icon: '✏', text: '아끼는 연필이 부러졌어요' },
-    { id: 'noise',  icon: '💥', text: '교실에서 갑자기 큰 소리가 났어요' },
-    { id: 'fall',   icon: '🩹', text: '친구가 넘어져서 무릎을 다쳤어요' },
+    // 2026-11-21 고학년에 맞게 상황을 바꿨다. id 는 그대로 둔다(저장된 표정·공용 데이터 faces 의 열쇠).
+    { id: 'praise', icon: '🏆', text: '발표가 끝나고 큰 박수를 받았어요' },
+    { id: 'pencil', icon: '🎮', text: '게임 기록이 통째로 날아갔어요' },
+    { id: 'noise',  icon: '📢', text: '갑자기 내 이름이 크게 불렸어요' },
+    { id: 'fall',   icon: '💬', text: '단짝이 단체방을 말없이 나갔어요' },
   ];
   const FEELS = ['기쁨', '슬픔', '놀람', '걱정', '화남', '부끄러움'];
   const SPEEDS = [{ ms: 300, name: '빠르게' }, { ms: 600, name: '보통' }, { ms: 1000, name: '느리게' }];
@@ -59,31 +60,31 @@
     document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('on', +b.dataset.step === n));
     document.querySelectorAll('.page').forEach(p => p.classList.toggle('hidden', +p.dataset.page !== n));
     if (n === 1) show(g1);
-    else if (n === 2) show(g2);
-    else kit.dot.clear();
+    else kit.dot.clear();          // ② 는 로봇에 띄우지 않는다 — 보호자가 ③ 시험에서 처음 봐야 맞힐 것이 있다
     if (n === 4) renderFew();
   }
   document.querySelectorAll('#steps button').forEach(b => { b.onclick = () => showStep(+b.dataset.step); });
 
   // ── 그림판(① ② 같이 씀) ──────────────────────────────────────────
-  function makeGrid(el, get, set, after) {
+  // toRobot: 칸을 누를 때 알티노 도트에도 바로 띄울지. ② 는 false(태블릿에서만 보인다)
+  function makeGrid(el, get, set, after, toRobot) {
     const cells = [];
     for (let i = 0; i < 64; i++) {
       const b = document.createElement('button'), r = i >> 3, c = i & 7;
-      b.onclick = () => { const v = get().slice(); v[r] ^= (0x80 >> c); set(v); paint(); show(v); after(); };
+      b.onclick = () => { const v = get().slice(); v[r] ^= (0x80 >> c); set(v); paint(); if (toRobot) show(v); after(); };
       el.appendChild(b); cells.push(b);
     }
     function paint() { const v = get(); cells.forEach((b, i) => b.classList.toggle('on', !!(v[i >> 3] & (0x80 >> (i & 7))))); }
     return paint;
   }
-  const paint1 = makeGrid($('grid1'), () => g1, (v) => { g1 = v; kit.store.set('g1', v); }, () => renderCount());
-  const paint2 = makeGrid($('grid2'), () => g2, (v) => { g2 = v; }, () => renderCards());
+  const paint1 = makeGrid($('grid1'), () => g1, (v) => { g1 = v; kit.store.set('g1', v); }, () => renderCount(), true);
+  const paint2 = makeGrid($('grid2'), () => g2, (v) => { g2 = v; }, () => renderCards(), false);
   function renderCount() {
     $('count1').textContent = `켠 칸 ${lit(g1)} / 64`;
     $('count4').textContent = `지금 ① 그림판: ${lit(g1)}칸`;
   }
   $('clear1').onclick = () => { g1 = empty(); kit.store.set('g1', g1); paint1(); show(g1); renderCount(); };
-  $('clear2').onclick = () => { g2 = empty(); paint2(); show(g2); renderCards(); };
+  $('clear2').onclick = () => { g2 = empty(); paint2(); renderCards(); };
 
   // ① 따라 그리기 예시 — 누르면 알티노가 먼저 보여 준다(그림판은 그대로)
   SAMPLES.forEach(s => {
@@ -102,7 +103,7 @@
   function pickCard(id) {
     card = id; const f = faces[id];
     feel = f ? f.feel : null; g2 = f ? f.bytes.slice() : empty();
-    paint2(); show(g2); renderCards();
+    paint2(); renderCards();
   }
   $('save2').onclick = () => {
     if (!card || !feel || !lit(g2)) return;
