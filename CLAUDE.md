@@ -42,7 +42,7 @@
 - kit appId: 수업 `tNN`, 캠프 `cNN`(c00 홈, c01~c05 경기장, c09 점검)
 - 시험: `node tests/camp.mjs`, `node tests/probe.mjs`, `node tests/frames.mjs` 가 모두 통과해야 올린다.
 - `main` 에 올리면 APK 가 Releases 로 나간다 → 태블릿이 업데이트로 받는다. 시험용은 다른 브랜치(Artifacts).
-- 시연용 웹 버전: `main` 의 `webapp/` 이 바뀌면 `.github/workflows/pages.yml` 이 GitHub Pages(https://i20091119-ai.github.io/altino/)에 올린다. 브라우저에서는 가짜 로봇으로만 동작한다(실제 연결 없음).
+- 시연용 웹 버전: `main` 의 `webapp/` 이 바뀌면 `.github/workflows/pages.yml` 이 GitHub Pages(https://i20091119-ai.github.io/altino/)에 올린다. 브라우저에서는 가짜 로봇으로만 동작한다(실제 연결 없음). 2026-11-21 사용자가 주소가 열리는 것을 확인.
 - 사용자 지시(2026-11-17): 시험 세 개와 브랜치 APK 빌드가 통과하면 묻지 않고 PR 을 main 에 합치고, Release 번호를 알린다.
 
 ## 사용 환경
