@@ -18,10 +18,11 @@
     { name: '놀람', bytes: [0x00, 0x66, 0x66, 0x00, 0x18, 0x24, 0x24, 0x18] },
   ];
   const CARDS = [
-    { id: 'praise', icon: '🖼', text: '친구가 내 그림을 칭찬했어요' },
-    { id: 'pencil', icon: '✏', text: '아끼는 연필이 부러졌어요' },
-    { id: 'noise',  icon: '💥', text: '교실에서 갑자기 큰 소리가 났어요' },
-    { id: 'fall',   icon: '🩹', text: '친구가 넘어져서 무릎을 다쳤어요' },
+    // 2026-11-21 고학년에 맞게 상황을 바꿨다. id 는 그대로 둔다(저장된 표정·공용 데이터 faces 의 열쇠).
+    { id: 'praise', icon: '🏆', text: '발표가 끝나고 큰 박수를 받았어요' },
+    { id: 'pencil', icon: '🎮', text: '게임 기록이 통째로 날아갔어요' },
+    { id: 'noise',  icon: '📢', text: '갑자기 내 이름이 크게 불렸어요' },
+    { id: 'fall',   icon: '💬', text: '단짝이 단체방을 말없이 나갔어요' },
   ];
   const FEELS = ['기쁨', '슬픔', '놀람', '걱정', '화남', '부끄러움'];
   const SPEEDS = [{ ms: 300, name: '빠르게' }, { ms: 600, name: '보통' }, { ms: 1000, name: '느리게' }];
