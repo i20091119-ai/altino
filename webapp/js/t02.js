@@ -124,7 +124,10 @@
   let expSpeed = kit.store.num('expSpeed', 300, 300, 500);
   if (!EXP_SPEEDS.includes(expSpeed)) expSpeed = 300;
   let pDraft = 5, aDraft = 5, runPhase = 'idle';   // idle | running | measure
-  const clampHand = (v) => Math.max(0, Math.min(99, Math.round(+v || 0)));
+  // 뼘은 반 뼘(0.5) 단위로 적는다 — 줄자 없이 손으로 재므로 '3뼘 반'을 적을 수 있어야 한다
+  const HAND_STEP = 0.5;
+  const clampHand = (v) => Math.max(0, Math.min(99, Math.round((+v || 0) * 2) / 2));
+  const fmtHand = (v) => String(Math.round(v * 2) / 2);            // 3 → '3', 3.5 → '3.5'
   const rowOf = (s) => exp[s] || {};
 
   EXP_SPEEDS.forEach(s => {
@@ -133,10 +136,10 @@
     b.onclick = () => { if (runPhase === 'running') return; expSpeed = s; kit.store.set('expSpeed', s); runPhase = 'idle'; renderExp(); };
     $('speedChips').appendChild(b);
   });
-  $('pMinus').onclick = () => { pDraft = clampHand(pDraft - 1); renderExp(); };
-  $('pPlus').onclick = () => { pDraft = clampHand(pDraft + 1); renderExp(); };
-  $('aMinus').onclick = () => { aDraft = clampHand(aDraft - 1); renderExp(); };
-  $('aPlus').onclick = () => { aDraft = clampHand(aDraft + 1); renderExp(); };
+  $('pMinus').onclick = () => { pDraft = clampHand(pDraft - HAND_STEP); renderExp(); };
+  $('pPlus').onclick = () => { pDraft = clampHand(pDraft + HAND_STEP); renderExp(); };
+  $('aMinus').onclick = () => { aDraft = clampHand(aDraft - HAND_STEP); renderExp(); };
+  $('aPlus').onclick = () => { aDraft = clampHand(aDraft + HAND_STEP); renderExp(); };
 
   $('lockP').onclick = () => {
     exp[expSpeed] = { p: pDraft };            // 예상을 새로 적으면 그 속도의 실제값은 다시 잰다
@@ -173,7 +176,7 @@
   $('saveA').onclick = () => {
     exp[expSpeed] = { p: rowOf(expSpeed).p, a: aDraft };
     kit.store.set('exp', exp); runPhase = 'idle';
-    kit.dot.number(aDraft); kit.signal('success');
+    kit.dot.number(Math.round(aDraft)); kit.signal('success');   // 도트에는 정수만 나온다
     const next = EXP_SPEEDS.find(s => rowOf(s).a == null);
     if (next != null) { expSpeed = next; kit.store.set('expSpeed', next); pDraft = 5; }
     renderExp();
@@ -190,21 +193,21 @@
       b.classList.toggle('done', rowOf(+b.dataset.s).a != null);
     });
     const running = runPhase === 'running';
-    $('pVal').textContent = locked ? row.p : pDraft;
+    $('pVal').textContent = fmtHand(locked ? row.p : pDraft);
     $('pMinus').disabled = $('pPlus').disabled = locked;
     $('lockP').disabled = locked || running;
-    $('lockP').textContent = locked ? '🔒 예상 ' + row.p + '뼘' : '🔒 예상 적기';
+    $('lockP').textContent = locked ? '🔒 예상 ' + fmtHand(row.p) + '뼘' : '🔒 예상 적기';
     $('runBtn').disabled = !locked || running;
     $('runBtn').classList.toggle('hidden', running);
     $('stopBtn').classList.toggle('hidden', !running);
     $('actualBox').classList.toggle('hidden', runPhase !== 'measure');
-    $('aVal').textContent = aDraft;
+    $('aVal').textContent = fmtHand(aDraft);
     if (!running) {
       $('expGuide').textContent = !locked ? '① 속도를 고르고 ② 몇 뼘 갈지 예상을 먼저 적어요.'
-        : measured ? `속도 ${expSpeed}: 예상 ${row.p}뼘 · 실제 ${row.a}뼘 — 다른 속도도 해 봐요.`
+        : measured ? `속도 ${expSpeed}: 예상 ${fmtHand(row.p)}뼘 · 실제 ${fmtHand(row.a)}뼘 — 다른 속도도 해 봐요.`
         : '③ 3초 달리기를 눌러요. 달리는 길에는 들어가지 않아요.';
       if (runPhase === 'idle') { $('clock').textContent = '0.0초'; if (!/멈췄어요/.test($('runMsg').textContent)) $('runMsg').textContent = '앱이 3초를 똑같이 재 줘요 — 공정한 실험!'; }
-      if (runPhase === 'measure') $('runMsg').textContent = '거리를 재는 사람은 한 명! 정한 사람의 뼘으로 재요.';
+      if (runPhase === 'measure') $('runMsg').textContent = '거리를 재는 사람은 한 명! 정한 사람의 뼘으로 재요. 반 뼘은 .5';
     }
     renderChart();
   }
@@ -218,7 +221,7 @@
       [['p', r.p], ['a', r.a]].forEach(([k, v]) => {
         const b = document.createElement('div'); b.className = 'bar ' + k;
         b.style.height = v == null ? '0' : (v / max * 100) + '%';
-        b.textContent = v == null ? '' : v; bars.appendChild(b);
+        b.textContent = v == null ? '' : fmtHand(v); bars.appendChild(b);
       });
       const lab = document.createElement('span'); lab.textContent = s === 350 ? '350 게임' : '속도 ' + s;
       col.appendChild(bars); col.appendChild(lab); $('chart').appendChild(col);
@@ -228,16 +231,16 @@
     let msg = '속도마다 실험하면 그래프가 채워져요.';
     if (done) {
       const gaps = [300, 400, 500].map(s => [s, Math.abs(rowOf(s).p - rowOf(s).a)]).sort((x, y) => y[1] - x[1]);
-      msg = a5 > a3 ? `속도 500은 300보다 ${a5 - a3}뼘 더 갔어요. 예상과 가장 달랐던 속도는 ${gaps[0][0]}!`
+      msg = a5 > a3 ? `속도 500은 300보다 ${fmtHand(a5 - a3)}뼘 더 갔어요. 예상과 가장 달랐던 속도는 ${gaps[0][0]}!`
         : `속도 500이 300보다 멀리 가지 않았어요. 바닥과 배터리를 살펴보고 다시 재 볼까요?`;
     } else if (rowOf(350).a != null) {
-      msg = `몇 뼘 갈까? 예상 ${rowOf(350).p}뼘 · 실제 ${rowOf(350).a}뼘 — 차이 ${Math.abs(rowOf(350).p - rowOf(350).a)}뼘`;
+      msg = `몇 뼘 갈까? 예상 ${fmtHand(rowOf(350).p)}뼘 · 실제 ${fmtHand(rowOf(350).a)}뼘 — 차이 ${fmtHand(Math.abs(rowOf(350).p - rowOf(350).a))}뼘`;
     }
     $('insight').textContent = msg;
   }
 
   // ── ④ 걸음마 시험 ────────────────────────────────────────────────
-  // test = { speed, results: [true/false…] }  — 판정은 보호자가 줄자로(바닥 센서가 없다, 03 §10)
+  // test = { speed, results: [true/false…] }  — 판정은 보호자가 눈으로(바닥 센서가 없다, 03 §10). 캠프에는 줄자가 없다
   let test = kit.store.get('test', null);
   if (!test || !BADGES.some(b => b.speed === test.speed) || !Array.isArray(test.results)) test = null;
   let phase = 'pick';   // pick | ready | driving | judge | done

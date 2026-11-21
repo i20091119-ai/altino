@@ -54,7 +54,7 @@
   .stepper{display:flex;align-items:center;gap:10px;justify-content:center}
   .stepper .btn{white-space:nowrap}
   .stepper button{width:64px;height:56px;font-size:1.6rem;border-radius:14px;border:2px solid var(--line);background:#fff;font-family:inherit}
-  .stepper b{font-size:2.2rem;min-width:3ch;text-align:center}
+  .stepper b{font-size:2.2rem;min-width:4ch;text-align:center}
   .stepper button:disabled{opacity:.35}
   .clock{font-size:2.6rem;font-weight:700;text-align:center;font-variant-numeric:tabular-nums}
   .say{text-align:center;font-size:1.1rem;margin:0}
@@ -187,6 +187,7 @@
       <h2>🔬 3초 달리기 실험</h2>
       <div class="chips" id="speedChips"></div>
       <p class="lead" id="expGuide">① 속도를 고르고 ② 몇 뼘 갈지 예상을 먼저 적어요.</p>
+      <p class="lead">줄자는 필요 없어요. 손 뼘으로 재고, 반 뼘은 3.5 처럼 적어요.</p>
       <div>
         <p class="say">예상 <span class="lead">(뼘)</span></p>
         <div class="stepper"><button id="pMinus">−</button><b id="pVal">5</b><button id="pPlus">+</button></div>
@@ -223,7 +224,7 @@
       <p class="say" id="testMsg">속도를 고르면 시작해요.</p>
       <ol class="rules">
         <li>보호자가 "출발!" 하면 아이가 ▲를 눌러요.</li>
-        <li>보호자가 줄자로 보고 ⭕·❌를 눌러요.</li>
+        <li>보호자가 정지선을 보고 ⭕·❌를 눌러요.</li>
       </ol>
     </section>
     <section class="card center">

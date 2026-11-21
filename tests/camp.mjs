@@ -209,6 +209,18 @@ console.log('■ 직진 영점');
   await p.screenshot({ path: path.join(SHOTS, 't02_straight.png') });
   await p.click('#steps [data-step="2"]'); await p.waitForTimeout(200);
   ok(await p.locator('#d-up').isVisible(), '② 걸음마 연습으로 넘어감');
+  // ③ 뼘은 반 뼘 단위(줄자 없이 손으로 잰다)
+  await p.click('#steps [data-step="3"]'); await p.waitForTimeout(200);
+  await p.click('#pMinus'); await p.click('#pMinus'); await p.click('#pMinus');
+  ok((await p.textContent('#pVal')) === '3.5', '예상: − 세 번 → 3.5뼘');
+  await p.click('#lockP');
+  ok((await p.textContent('#lockP')).includes('3.5뼘'), '예상 3.5뼘으로 잠김');
+  await p.click('#runBtn'); await p.waitForSelector('#actualBox:not(.hidden)', { timeout: 8000 });
+  await p.click('#aPlus'); await p.click('#aPlus'); await p.click('#aPlus');
+  ok((await p.textContent('#aVal')) === '5', '실제: 3.5 에서 + 세 번 → 5뼘');
+  await p.click('#aMinus'); await p.click('#saveA'); await p.waitForTimeout(200);
+  ok(await p.evaluate(() => { const e = JSON.parse(localStorage.getItem('altino.t02.exp')); return e['300'].p === 3.5 && e['300'].a === 4.5; }), '예상 3.5 · 실제 4.5 로 저장');
+  ok(await p.evaluate(() => [...document.querySelectorAll('#chart .bar')].slice(0, 2).map(b => b.textContent).join()) === '3.5,4.5', '그래프에 3.5 · 4.5 표시');
   ok(!p._errs.length, '오류 없음' + (p._errs.length ? ' — ' + p._errs.join(' | ') : ''));
   await p.context().close();
 }
