@@ -142,6 +142,7 @@
     let ver = ''; try { ver = JSON.parse(window.AltinoUpdate.info() || '{}').name || ''; } catch (e) {}
     const lines = [
       '[알티노 캠프 앱 점검]', `앱 ${ver || '(브라우저)'} · ${new Date().toLocaleString('ko-KR')}`,
+      `화면 ${window.innerWidth}x${window.innerHeight}` + (window.__fit ? ` (원래 ${window.__fit.from} → 너비 ${window.__fit.width} 로 줄여 맞춤)` : ' (맞춤 없음)') + ` · 배율 ${window.devicePixelRatio}`,
       `로봇 ${st.name || '-'} (${st.address || '-'}) · 프레임 ${P.getModel()} · 연결 ${kit.connected ? 'O' : 'X'}`,
       `받은 프레임 ${d.rxFrames} · 받은 바이트 ${d.rxBytes} · 보낸 프레임 ${d.txCount}`,
       '센서(지금/최소/최대): ' + KEYS.map(k => `${k} ${kit.sensor[k] == null ? '-' : kit.sensor[k]}/${min[k] == null ? '-' : min[k]}/${max[k] == null ? '-' : max[k]}`).join(', '),
